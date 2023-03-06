@@ -1,2 +1,3 @@
-# image_matching_demos
+# image_matching
+
 Some Image Matching Algorithms for Learning
