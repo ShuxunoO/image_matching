@@ -52,7 +52,8 @@ def get_ramdom_imagefilter():
 
 # 随机取出一个emoji地址
 def get_ramdom_emoji():
-    emoji_path = '/data/sswang/image_matching/data_augmentations/emojis/'
+    # emoji_path = '/data/sswang/image_matching/data_augmentations/emojis/'
+    emoji_path = 'C:/Users/Lenovo/Desktop/AI/image_matching/data_augmentations/emojis/'
     emoji_list = os.listdir(emoji_path)
     return os.path.join(emoji_path, random.choice(emoji_list))
 
@@ -82,7 +83,7 @@ def get_random_overlaytext():
 
 # 拿到一个随机的截屏背景
 def get_random_screenshot_template():
-    screenshot_path = '/data/sswang/image_matching/data_augmentations/screenshot_templates/'
+    screenshot_path = 'C:/Users/Lenovo/Desktop/AI/image_matching/data/screenshot_templates/'
     screenshot_list = [
         i for i in os.listdir(screenshot_path) if i.endswith('png')
     ]
@@ -144,20 +145,31 @@ def overlay_image(bg_img, overlay):
         将overlay图层粘贴到bg_img图层上，之后返回对应的yolo格式的标签
 
     """
-    overlay_size= random.uniform(0.3, 0.6)
-    x_pos=random.uniform(0.3, 0.7)
-    y_pos=random.uniform(0.3, 0.7)
+    overlay_size= random.uniform(0.2, 0.5)
+    x_pos=random.uniform(0.1, 0.5)
+    y_pos=random.uniform(0.1, 0.5)
 
     """
-        把overlay image 贴到 image上面
-        Overlays an image onto another image at position (width * x_pos, height * y_pos)
-        image :the path to an image or a variable of type PIL.Image.Image to be augmented(背景图片)
-        overlay: the path to an image or a variable of type PIL.Image.Image that will be overlaid(贴在背景图上的图片,简称‘贴图’)
-        x_pos (float) : position of overlaid image relative to the image width
-        y_pos (float) : position of overlaid image relative to the image height
-        overlay_size: 贴图的尺寸， overlay_size * height of the original image
+        把 image 贴到 background 上面
+
+        image： 贴图
+
+        background_image ： 背景图片
+
+        opacity (float)：贴图的透明度
+
+        overlay_size (float): 贴图的高度与背景图高度的比值
+
+        x_pos (float)： 贴图相对于背景图像宽度在x轴的位置
+
+        y_pos (float)： 贴图相对于背景图像高度在y轴的位置
+
+        scale_bg (bool)： if True, the background image will be scaled up or down so that overlay_size is respected; if False, the source image will be scaled instead
+
+
     """
-    aug_img = imaugs.overlay_image(image=bg_img, overlay=overlay, overlay_size= overlay_size, x_pos=x_pos, y_pos=y_pos)
+    aug_img = imaugs.overlay_onto_background_image(image = overlay, background_image = bg_img,
+    opacity=random.uniform(0.5, 1), overlay_size=overlay_size, x_pos=x_pos, y_pos=y_pos)
 
     # 背景图的宽和高
     bg_width, bg_height = bg_img.size
@@ -182,209 +194,328 @@ def overlay_image(bg_img, overlay):
 
 
 # 对贴图进行增强
-def generate_overlay_aug():
-    overlay_aug0 = imaugs.Compose(
-    [
-        # 图像过滤器
-        imaugs.ApplyPILFilter(filter_type = get_ramdom_imagefilter(), p=0.1),
-
-        # 改变图像明亮度
-        imaugs.Brightness(factor=random.uniform(0, 1.5), p=0.3),
-
-        # 改变图像对比度
-        imaugs.Contrast(factor=random.uniform(0, 5),p=0.3),
-
-        # 改变图片的锐度
-        imaugs.Sharpen(factor=random.uniform(0,10),  p=0.4),
-
-        # 随机裁减下来图像
-        imaugs.Crop(x1=random.triangular(0.2, 0.3),
-                    y1=random.triangular(0.2, 0.3),
-                    x2=random.triangular(0.5, 0.9),
-                    y2=random.triangular(0.5, 0.9), p=0.2),
-
-        # 改变图像画质的压缩质量
-        imaugs.EncodingQuality(quality=random.randint(0,100), p=0.1),
-
-        # 将图像变为灰度图
-        imaugs.Grayscale(mode=random.choice(['luminosity' ,'average']), p=0.6),
-
-        # 在图像上叠加emoji
-        imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.7), y_pos=random.uniform(0.3,0.7),p=1.0),
-        imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.5), y_pos=random.uniform(0.3,0.7),p=0.3),
-
-        # 在图像上叠加线段
-        imaugs.OverlayStripes(line_width=random.uniform(0.3,1), line_color=random_RGB(), line_angle=random.uniform(-180, 180), line_density=random.uniform(0.3,1), line_type=get_line_type(), line_opacity=random.uniform(0.5,1),p=0.6),
-
-        # 在图片上叠加文字
-        imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1,0.3), opacity=random.uniform(0.3, 1), color=random_RGB(), x_pos=random.uniform(0.1,0.6), y_pos=random.uniform(0.1,0.7), p=0.6),
-
-        # 图片旋转
-        imaugs.Rotate(degrees=random.uniform(-180, 180), p=0.6),
-
-        # 图片垂直翻转
-        imaugs.VFlip(p=0.2),
-
-        # 缩放图片
-        imaugs.Scale(factor=random.uniform(0.3, 0.5), interpolation=None, p=1.0),
-
-        # 改变图像的透明度
-        imaugs.Opacity(level=random.random(),p=0.2)
-                ])
-
-    overlay_aug1 = imaugs.Compose([
-
-        # 改变图像明亮度
-        imaugs.Brightness(factor=random.uniform(0, 1.5), p=0.3),
-
-        # 改变图像对比度
-        imaugs.Contrast(factor=random.uniform(0, 5),p=0.3),
-
-        # 改变图片的锐度
-        imaugs.Sharpen(factor=random.uniform(0,10),  p=0.4),
-
-        # 随机裁减下来图像
-        imaugs.Crop(x1=random.triangular(0.2, 0.3),
-                    y1=random.triangular(0.2, 0.3),
-                    x2=random.triangular(0.5, 0.9),
-                    y2=random.triangular(0.5, 0.9), p=0.3),
-
-        # 水平翻转
-        imaugs.HFlip(p=0.6),
-
-        # 模因格式（在图片上方加文字）
-        imaugs.MemeFormat(text=get_ramdom_string(), opacity=random.uniform(0.3,1), text_color=random_RGB(), caption_height=random.randint(20,200), meme_bg_color=random_RGB(),p=0.2),
-
-        # 将图片pad成正方形
-        imaugs.PadSquare(color=random_RGB(), p=0.3),
-
-        # 在图片上叠加文字
-        imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1,0.3), opacity=random.uniform(0.3, 1), color=random_RGB(), x_pos=random.uniform(0.1,0.6), y_pos=random.uniform(0.1,0.7), p=0.6),
-
-        # 改变图片的观察角度
-        imaugs.PerspectiveTransform(sigma=random.randint(50,150), dx=random.uniform(0,10), dy=random.uniform(0,10), seed=random.randint(1,200), p=0.2),
-
-        # 在图像上叠加emoji
-        imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.7), y_pos=random.uniform(0.3,0.7),p=0.6),
-        imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.5), y_pos=random.uniform(0.3,0.7),p=0.2),
-
-        # 改变图片的长宽比
-        imaugs.RandomAspectRatio(min_ratio=0.3, max_ratio=3.0, p=0.6),
-
-        # 给图片加上噪声（这个运算很慢）
-        imaugs.RandomNoise(mean=random.random(), var=random.uniform(0.1, 0.5), seed=random.randint(10, 50),  p=0.01),
-
-        # 缩放图片
-        imaugs.Scale(factor=random.uniform(0.3, 0.5), interpolation=None, p=1.0),
-
-        # 改变图像的透明度
-        imaugs.Opacity(level=random.random(),p=0.2),
-
-    ])
-    overlay_aug2 = imaugs.Compose([
-
-        # 改变图像明亮度
-        imaugs.Brightness(factor=random.uniform(0, 1.5), p=0.3),
-
-        # 改变图像对比度
-        imaugs.Contrast(factor=random.uniform(0, 5),p=0.3),
-
-        # 改变图片的锐度
-        imaugs.Sharpen(factor=random.uniform(0,10),  p=0.4),
-
-        # 随机裁减下来图像
-        imaugs.Crop(x1=random.triangular(0.2, 0.3),
-                    y1=random.triangular(0.2, 0.3),
-                    x2=random.triangular(0.5, 0.9),
-                    y2=random.triangular(0.5, 0.9), p=0.2),
-
-        # 打乱图片的像素分布（很费时间）
-        imaugs.ShufflePixels(factor=random.uniform(0.3,1), seed=random.randint(10,100), p=0.1),
-
-        #让图片变倾斜
-        imaugs.Skew(skew_factor=random.uniform(-2, 2), axis=random.choice([0, 1]),  p=0.1),
-
-        # 在图像上叠加线段
-        imaugs.OverlayStripes(line_width=random.uniform(0.3,1), line_color=random_RGB(), line_angle=random.uniform(-180, 180), line_density=random.uniform(0.3,1), line_type=get_line_type(), line_opacity=random.uniform(0.5,1),p=0.6),
-
-        # 在图像上叠加emoji
-        imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.7), y_pos=random.uniform(0.3,0.7),p=0.5),
-        imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.5), y_pos=random.uniform(0.3,0.7),p=0.2),
-
-        # 在图片上叠加文字
-        imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1,0.3), opacity=random.uniform(0.3, 1), color=random_RGB(), x_pos=random.uniform(0.1,0.6), y_pos=random.uniform(0.1,0.7), p=0.6),
-        
-        # 缩放图片
-        imaugs.Scale(factor=random.uniform(0.3, 0.5), interpolation=None, p=1.0),
-
-        # 改变图像的透明度
-        imaugs.Opacity(level=random.random(),p=0.2),
-    ])
-
-    overlay_aug3 = imaugs.Compose(
-    [
-        # 改变图像明亮度
-        imaugs.Brightness(factor=random.uniform(0, 1.5), p=0.3),
-
-        # 改变图像对比度
-        imaugs.Contrast(factor=random.uniform(0, 5),p=0.3),
-
-        # 改变图片的锐度
-        imaugs.Sharpen(factor=random.uniform(0,10),  p=0.4),
-
-        # 在图像上叠加emoji
-        imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.7), y_pos=random.uniform(0.3,0.7),p=1.0),
-        imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.5), y_pos=random.uniform(0.3,0.7),p=0.6),
-
-        # 在图片上叠加文字
-        imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1,0.3), opacity=random.uniform(0.3, 1), color=random_RGB(), x_pos=random.uniform(0.1,0.6), y_pos=random.uniform(0.1,0.7), p=0.6),
-
-        # 给图片加上边框
-        imaugs.Pad(w_factor=random.uniform(0.1, 0.3), h_factor=random.uniform(0.1, 0.3), color=random_RGB(), p=0.3),
-
-        # 将图片像素化
-        imaugs.Pixelization(ratio=random.random(),  p=0.6),
-
-        # 缩放图片
-        imaugs.Scale(factor=random.uniform(0.3, 0.5), interpolation=None, p=1.0),
-
-        # 改变图像的透明度
-        imaugs.Opacity(level=random.random(),p=0.2),
-
-    ])
-
-    return random.choice([overlay_aug0, overlay_aug1, overlay_aug2, overlay_aug3])
-
-
-# 对背景图片进行增强
-def generate_bg_aug(width=224, height=224):
+def generate_overlay_aug(aug_level = 0):
     # 模式0
-    bg_aug0 = imaugs.Compose(
+    over_aug0 = imaugs.Compose(
         [
-            imaugs.Brightness(factor=random.uniform(0, 3), p=0.3),
-            imaugs.Contrast(factor=random.uniform(0, 5), p=0.3),
-            imaugs.Crop(x1=random.triangular(0.3, 0.49),
+            # 改变图片亮度
+            imaugs.Brightness(factor=random.uniform(0, 1), p=0.3),
+
+            # 改变图片对比度
+            imaugs.Contrast(factor=random.uniform(0, 2), p=0.3),
+
+            # 锐化图片
+            imaugs.Sharpen(factor=random.uniform(5, 15), p=0.3),
+
+            # 改变图像饱和度
+            imaugs.Saturation(factor=random.random(), p=0.3),
+
+            # 随机裁减
+            imaugs.Crop(
+            x1=random.triangular(0.2, 0.49),
+            y1=random.triangular(0.2, 0.49),
+            x2=random.triangular(0.5, 0.9),
+            y2=random.triangular(0.5, 0.9),
+            p=0.1),
+
+            # 水平翻转
+            imaugs.HFlip(p=0.3),
+
+            # 图片旋转
+            imaugs.Rotate(degrees=random.uniform(-180, 180), p=0.3),
+
+        ])
+
+    # 模式1
+    over_aug1 = imaugs.Compose(
+        [
+            # 改变图片亮度
+            imaugs.Brightness(factor=random.uniform(0, 1), p=0.3),
+
+            # 改变图片对比度
+            imaugs.Contrast(factor=random.uniform(0, 2), p=0.3),
+
+            # 锐化图片
+            imaugs.Sharpen(factor=random.uniform(5, 15), p=0.3),
+
+            # 改变图像饱和度
+            imaugs.Saturation(factor=random.random(), p=0.3),
+
+            # 随机裁减
+            imaugs.Crop(
+            x1=random.triangular(0.3, 0.49),
+            y1=random.triangular(0.3, 0.49),
+            x2=random.triangular(0.5, 0.9),
+            y2=random.triangular(0.5, 0.9),
+            p=0.1),
+
+            # 将图像变为灰度图
+            imaugs.Grayscale(mode=random.choice(['luminosity', 'average']), p=0.3),
+
+            # 改变图片的长宽比
+            imaugs.RandomAspectRatio(min_ratio=0.3, max_ratio=3.0, p=0.4),
+
+            # 图片水平翻转
+            imaugs.HFlip(p=0.2),
+
+            # 图片垂直翻转
+            imaugs.VFlip(p=0.2)
+
+        ]
+    )
+
+    # 模式2
+    over_aug2 = imaugs.Compose(
+        [
+            # 改变图片亮度
+            imaugs.Brightness(factor=random.uniform(0, 2), p=0.2),
+
+            # 改变图片对比度
+            imaugs.Contrast(factor=random.uniform(0, 3), p=0.2),
+
+            # 锐化图片
+            imaugs.Sharpen(factor=random.uniform(5, 20), p=0.2),
+
+            # 改变图像饱和度
+            imaugs.Saturation(factor=random.random(), p=0.2),
+
+            # 随机裁减
+            imaugs.Crop(
+            x1=random.triangular(0.2, 0.49),
+            y1=random.triangular(0.2, 0.49),
+            x2=random.triangular(0.5, 0.9),
+            y2=random.triangular(0.5, 0.9),
+            p=0.1),
+
+            # 水平翻转
+            imaugs.HFlip(p=0.4),
+
+            # 图片旋转
+            imaugs.Rotate(degrees=random.uniform(-180, 180), p=0.4),
+
+            # 改变图像画质的压缩质量
+            imaugs.EncodingQuality(quality=random.randint(20, 100), p=0.2),
+
+            # 模因格式（在图片上方加文字）
+            imaugs.MemeFormat(text=get_ramdom_string(), opacity=random.uniform(0.3, 1), text_color=random_RGB(
+            ), caption_height=random.randint(20, 200), meme_bg_color=random_RGB(), p=0.2),
+
+            # 倾斜图片
+            imaugs.Skew(skew_factor=random.uniform(-2, 2),
+            axis=random.choice([0, 1]), p=0.1),
+        ]
+    )
+
+    # 模式3
+    over_aug3 = imaugs.Compose(
+        [
+            # 改变图片亮度
+            imaugs.Brightness(factor=random.uniform(0, 2), p=0.2),
+
+            # 改变图片对比度
+            imaugs.Contrast(factor=random.uniform(0, 3), p=0.2),
+
+            # 锐化图片
+            imaugs.Sharpen(factor=random.uniform(5, 20), p=0.2),
+
+            # 改变图像饱和度
+            imaugs.Saturation(factor=random.random(), p=0.2),
+
+            # 随机裁减
+            imaugs.Crop(
+            x1=random.triangular(0.3, 0.49),
+            y1=random.triangular(0.3, 0.49),
+            x2=random.triangular(0.5, 0.9),
+            y2=random.triangular(0.5, 0.9),
+            p=0.1),
+
+            # 将图像变为灰度图
+            imaugs.Grayscale(mode=random.choice(['luminosity', 'average']), p=0.3),
+
+            # 改变图片的长宽比
+            imaugs.RandomAspectRatio(min_ratio=0.3, max_ratio=3.0, p=0.3),
+
+            # 图片垂直翻转
+            imaugs.VFlip(p=0.3),
+
+            # 图像过滤器
+            imaugs.ApplyPILFilter(filter_type=get_ramdom_imagefilter(), p=0.1),
+
+            # 给图片加上边框
+            imaugs.Pad(w_factor=random.uniform(0.1, 0.3), h_factor=random.uniform(
+                0.1, 0.3), color=random_RGB(), p=0.2),
+
+            # 改变图片的观察角度
+            imaugs.PerspectiveTransform(sigma=random.randint(50, 150), dx=random.uniform(
+                0, 10), dy=random.uniform(0, 10), seed=random.randint(1, 200), p=0.3),
+
+        ]
+    )
+
+    # 模式4
+    over_aug4 = imaugs.Compose(
+        [
+            # 改变图片亮度
+            imaugs.Brightness(factor=random.uniform(0, 3), p=0.2),
+
+            # 改变图片对比度
+            imaugs.Contrast(factor=random.uniform(0, 5), p=0.2),
+
+            # 锐化图片
+            imaugs.Sharpen(factor=random.uniform(10, 20), p=0.2),
+
+            # 改变图像饱和度
+            imaugs.Saturation(factor=random.random(), p=0.2),
+
+            # 随机裁减
+            imaugs.Crop(
+            x1=random.triangular(0.3, 0.49),
+            y1=random.triangular(0.3, 0.49),
+            x2=random.triangular(0.5, 0.9),
+            y2=random.triangular(0.5, 0.9),
+            p=0.1),
+
+            # 将图像变为灰度图
+            imaugs.Grayscale(mode=random.choice(['luminosity', 'average']), p=0.1),
+
+            # 改变图片的长宽比
+            imaugs.RandomAspectRatio(min_ratio=0.3, max_ratio=3.0, p=0.3),
+
+            # 图片垂直翻转
+            imaugs.VFlip(p=0.3),
+
+            # 图像过滤器
+            imaugs.ApplyPILFilter(filter_type=get_ramdom_imagefilter(), p=0.1),
+
+            # 给图片加上边框
+            imaugs.Pad(w_factor=random.uniform(0.1, 0.3), h_factor=random.uniform(
+                0.1, 0.3), color=random_RGB(), p=0.1),
+
+            # 改变图片的观察角度
+            imaugs.PerspectiveTransform(sigma=random.randint(50, 150), dx=random.uniform(
+                0, 10), dy=random.uniform(0, 10), seed=random.randint(1, 200), p=0.3),
+
+            # 在图像上叠加emoji
+            imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5, 1), emoji_size=random.uniform(
+                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.8),
+
+            # 在图像上叠加emoji
+            imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5, 1), emoji_size=random.uniform(
+                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.3),
+
+            # 在图像上叠加线段
+            imaugs.OverlayStripes(line_width=random.uniform(0.3, 0.6), line_color=random_RGB(), line_angle=random.uniform(
+                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.3),
+
+            # 将图片像素化
+            imaugs.Pixelization(ratio=random.random(),  p=0.1),
+
+        ]
+    )
+
+    # 模式5
+    over_aug5 = imaugs.Compose(
+        [
+            # 改变图片亮度
+            imaugs.Brightness(factor=random.uniform(0, 3), p=0.2),
+
+            # 改变图片对比度
+            imaugs.Contrast(factor=random.uniform(0, 5), p=0.2),
+
+            # 锐化图片
+            imaugs.Sharpen(factor=random.uniform(10, 20), p=0.2),
+
+            # 改变图像饱和度
+            imaugs.Saturation(factor=random.random(), p=0.2),
+
+            # 随机裁减
+            imaugs.Crop(
+            x1=random.triangular(0.3, 0.49),
             y1=random.triangular(0.3, 0.49),
             x2=random.triangular(0.5, 0.9),
             y2=random.triangular(0.5, 0.9),
             p=0.3),
-            imaugs.EncodingQuality(quality=random.randint(0, 100), p=1.0),
-            imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(),
-                                opacity=random.uniform(0.5, 1),
-                                emoji_size=random.uniform(0, 1),
-                                x_pos=random.uniform(0.1, 0.7),
-                                y_pos=random.uniform(0.3, 0.7),
-                                p=0.8),
-            imaugs.Pad(w_factor=random.uniform(0.1, 0.3),
-                    h_factor=random.uniform(0.1, 0.3),
-                    color=random_RGB(),
-                    p=0.3),
+
+            # 将图像变为灰度图
+            imaugs.Grayscale(mode=random.choice(['luminosity', 'average']), p=0.1),
+
+            # 改变图片的长宽比
             imaugs.RandomAspectRatio(min_ratio=0.3, max_ratio=3.0, p=0.3),
-            imaugs.RandomNoise(mean=random.random(),
-                            var=random.uniform(0.5, 1),
-                            seed=random.randint(10, 50),
-                            p=0.1),
-            imaugs.Sharpen(factor=random.uniform(10, 20), p=0.3),
+
+            # 图片垂直翻转
+            imaugs.VFlip(p=0.3),
+
+            # 图像过滤器
+            imaugs.ApplyPILFilter(filter_type=get_ramdom_imagefilter(), p=0.1),
+
+            # 给图片加上边框
+            imaugs.Pad(w_factor=random.uniform(0.1, 0.3), h_factor=random.uniform(
+                0.1, 0.3), color=random_RGB(), p=0.1),
+
+            # 改变图片的观察角度
+            imaugs.PerspectiveTransform(sigma=random.randint(50, 150), dx=random.uniform(
+                0, 10), dy=random.uniform(0, 10), seed=random.randint(1, 200), p=0.3),
+
+            # 在图像上叠加emoji
+            imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5, 1), emoji_size=random.uniform(
+                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.8),
+
+            # 在图像上叠加emoji
+            imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5, 1), emoji_size=random.uniform(
+                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.3),
+
+            # 在图像上叠加线段
+            imaugs.OverlayStripes(line_width=random.uniform(0.3, 0.6), line_color=random_RGB(), line_angle=random.uniform(
+                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.15),
+
+            # 将图片像素化
+            imaugs.Pixelization(ratio=random.random(),  p=0.1),
+
+            # 在图片上叠加文字
+            imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1, 0.3), opacity=random.uniform(
+                0.3, 1), color=random_RGB(), x_pos=random.uniform(0.1, 0.6), y_pos=random.uniform(0.1, 0.7), p=0.2),
+
+            # 给图片加上噪声（这个运算很慢）
+            imaugs.RandomNoise(mean=random.random(), var=random.uniform(
+                0.5, 1), seed=random.randint(10, 50),  p=0.08),
+        ]
+    )
+
+    aug_list =[over_aug0, over_aug1, over_aug2, over_aug3, over_aug4, over_aug5]
+    return aug_list[aug_level]
+
+
+# 对背景图片进行增强
+def generate_bg_aug(width=224, height=224, aug_level=0):
+    # 模式0
+    bg_aug0 = imaugs.Compose(
+        [
+            # 改变图片亮度
+            imaugs.Brightness(factor=random.uniform(0, 1), p=0.3),
+
+            # 改变图片对比度
+            imaugs.Contrast(factor=random.uniform(0, 2), p=0.3),
+
+            # 锐化图片
+            imaugs.Sharpen(factor=random.uniform(5,15), p=0.3),
+
+            # 改变图像饱和度
+            imaugs.Saturation(factor=random.random(), p=0.3),
+
+            # 随机裁减
+            imaugs.Crop(
+            x1=random.triangular(0.2, 0.49),
+            y1=random.triangular(0.2, 0.49),
+            x2=random.triangular(0.5, 0.9),
+            y2=random.triangular(0.5, 0.9),
+            p=0.3),
+
+            # 水平翻转
+            imaugs.HFlip(p=0.6),
+
+            # 图片旋转
+            imaugs.Rotate(degrees=random.uniform(-180, 180), p=0.6),
+
             # 最后调节一下图片尺寸
             imaugs.Resize(width=width, height=height, p=1.0)
         ])
@@ -392,25 +523,38 @@ def generate_bg_aug(width=224, height=224):
     # 模式1
     bg_aug1 = imaugs.Compose(
         [
-            imaugs.Brightness(factor=random.uniform(0, 3), p=0.3),
-            imaugs.Contrast(factor=random.uniform(0, 5), p=0.3),
-            imaugs.Crop(x1=random.triangular(0.3, 0.49),
+            # 改变图片亮度
+            imaugs.Brightness(factor=random.uniform(0, 1), p=0.3),
+
+            # 改变图片对比度
+            imaugs.Contrast(factor=random.uniform(0, 2), p=0.3),
+
+            # 锐化图片
+            imaugs.Sharpen(factor=random.uniform(5,15), p=0.3),
+
+            # 改变图像饱和度
+            imaugs.Saturation(factor=random.random(), p=0.3),
+
+            # 随机裁减
+            imaugs.Crop(
+            x1=random.triangular(0.3, 0.49),
             y1=random.triangular(0.3, 0.49),
             x2=random.triangular(0.5, 0.9),
             y2=random.triangular(0.5, 0.9),
             p=0.3),
-            imaugs.EncodingQuality(quality=random.randint(0, 100), p=1.0),
-            imaugs.Grayscale(mode=random.choice(['luminosity', 'average']), p=0.3),
-            imaugs.HFlip(p=0.6),
-            imaugs.PerspectiveTransform(sigma=random.randint(30, 100),
-                            dx=random.uniform(0, 10),
-                            dy=random.uniform(0, 10),
-                            seed=random.randint(1, 200),
-                            p=0.3),
-            imaugs.Rotate(degrees=random.uniform(-180, 180), p=0.6),
-            imaugs.Skew(skew_factor=random.uniform(-2, 2),
-                        axis=random.choice([0, 1]),
-                        p=0.1),
+
+            # 将图像变为灰度图
+            imaugs.Grayscale(mode=random.choice(['luminosity', 'average']), p=0.4),
+
+            # 改变图片的长宽比
+            imaugs.RandomAspectRatio(min_ratio=0.3, max_ratio=3.0, p=0.4),
+
+            # 图片水平翻转
+            imaugs.HFlip(p=0.3),
+
+            # 图片垂直翻转
+            imaugs.VFlip(p=0.3),
+
             # 最后调节一下图片尺寸
             imaugs.Resize(width=width, height=height, p=1.0)
         ]
@@ -418,40 +562,329 @@ def generate_bg_aug(width=224, height=224):
 
     bg_aug2 = imaugs.Compose(
         [
-            imaugs.Brightness(factor=random.uniform(0, 3), p=0.3),
-            imaugs.Contrast(factor=random.uniform(0, 5), p=0.3),
-            imaugs.Crop(x1=random.triangular(0.3, 0.49),
+            # 改变图片亮度
+            imaugs.Brightness(factor=random.uniform(0, 2), p=0.2),
+
+            # 改变图片对比度
+            imaugs.Contrast(factor=random.uniform(0, 3), p=0.2),
+
+            # 锐化图片
+            imaugs.Sharpen(factor=random.uniform(5, 15), p=0.2),
+
+            # 改变图像饱和度
+            imaugs.Saturation(factor=random.random(), p=0.2),
+
+            # 随机裁减
+            imaugs.Crop(
+            x1=random.triangular(0.2, 0.49),
+            y1=random.triangular(0.2, 0.49),
+            x2=random.triangular(0.5, 0.9),
+            y2=random.triangular(0.5, 0.9),
+            p=0.3),
+
+            # 水平翻转
+            imaugs.HFlip(p=0.4),
+
+            # 图片旋转
+            imaugs.Rotate(degrees=random.uniform(-180, 180), p=0.4),
+
+            # 改变图像画质的压缩质量
+            imaugs.EncodingQuality(quality=random.randint(50, 100), p=0.2),
+
+            # 模因格式（在图片上方加文字）
+            imaugs.MemeFormat(text=get_ramdom_string(), opacity=random.uniform(0.3, 1), text_color=random_RGB(
+            ), caption_height=random.randint(20, 200), meme_bg_color=random_RGB(), p=0.2),
+
+            # 倾斜图片
+            imaugs.Skew(skew_factor=random.uniform(-2, 2),
+            axis=random.choice([0, 1]), p=0.1),
+
+            # 将图片pad成正方形
+            imaugs.PadSquare(color=random_RGB(), p=0.2),
+
+            # 最后调节一下图片尺寸
+            imaugs.Resize(width=width, height=height, p=1.0)
+        ]
+    )
+
+    bg_aug3 = imaugs.Compose(
+        [
+            # 改变图片亮度
+            imaugs.Brightness(factor=random.uniform(0, 2), p=0.2),
+
+            # 改变图片对比度
+            imaugs.Contrast(factor=random.uniform(0, 3), p=0.2),
+
+            # 锐化图片
+            imaugs.Sharpen(factor=random.uniform(5, 15), p=0.2),
+
+
+            # 改变图像饱和度
+            imaugs.Saturation(factor=random.random(), p=0.2),
+
+            # 随机裁减
+            imaugs.Crop(
+            x1=random.triangular(0.3, 0.49),
             y1=random.triangular(0.3, 0.49),
             x2=random.triangular(0.5, 0.9),
             y2=random.triangular(0.5, 0.9),
             p=0.3),
-            imaugs.Pixelization(ratio=random.random(), p=0.6),
-            imaugs.Saturation(factor=random.random(), p=0.6),
-            imaugs.Resize(width=width, height=height, p=1.0),
+
+            # 将图像变为灰度图
+            imaugs.Grayscale(mode=random.choice(['luminosity', 'average']), p=0.3),
+
+            # 改变图片的长宽比
+            imaugs.RandomAspectRatio(min_ratio=0.3, max_ratio=3.0, p=0.3),
+
+            # 图片垂直翻转
+            imaugs.VFlip(p=0.3),
+
+            # 图像过滤器
+            imaugs.ApplyPILFilter(filter_type=get_ramdom_imagefilter(), p=0.2),
+
+            # 给图片加上边框
+            imaugs.Pad(w_factor=random.uniform(0.1, 0.3), h_factor=random.uniform(
+                0.1, 0.3), color=random_RGB(), p=0.2),
+
+            # 改变图片的观察角度
+            imaugs.PerspectiveTransform(sigma=random.randint(50, 150), dx=random.uniform(
+                0, 10), dy=random.uniform(0, 10), seed=random.randint(1, 200), p=0.3),
+
+            # 倾斜图片
             imaugs.Skew(skew_factor=random.uniform(-2, 2),
             axis=random.choice([0, 1]), p=0.1),
+
+            # 最后调节一下图片尺寸
+            imaugs.Resize(width=width, height=height, p=1.0)
         ]
     )
 
-    return random.choice([bg_aug0, bg_aug1, bg_aug2])
+    bg_aug4 = imaugs.Compose(
+        [
+            # 改变图片亮度
+            imaugs.Brightness(factor=random.uniform(0, 3), p=0.2),
 
+            # 改变图片对比度
+            imaugs.Contrast(factor=random.uniform(0, 5), p=0.2),
+
+            # 锐化图片
+            imaugs.Sharpen(factor=random.uniform(10, 20), p=0.2),
+
+            # 改变图像饱和度
+            imaugs.Saturation(factor=random.random(), p=0.2),
+
+            # 随机裁减
+            imaugs.Crop(
+            x1=random.triangular(0.3, 0.49),
+            y1=random.triangular(0.3, 0.49),
+            x2=random.triangular(0.5, 0.9),
+            y2=random.triangular(0.5, 0.9),
+            p=0.3),
+
+            # 将图像变为灰度图
+            imaugs.Grayscale(mode=random.choice(['luminosity', 'average']), p=0.1),
+
+            # 改变图片的长宽比
+            imaugs.RandomAspectRatio(min_ratio=0.3, max_ratio=3.0, p=0.3),
+
+            # 图片垂直翻转
+            imaugs.VFlip(p=0.3),
+
+            # 图像过滤器
+            imaugs.ApplyPILFilter(filter_type=get_ramdom_imagefilter(), p=0.1),
+
+            # 给图片加上边框
+            imaugs.Pad(w_factor=random.uniform(0.1, 0.3), h_factor=random.uniform(
+                0.1, 0.3), color=random_RGB(), p=0.1),
+
+            # 改变图片的观察角度
+            imaugs.PerspectiveTransform(sigma=random.randint(50, 150), dx=random.uniform(
+                0, 10), dy=random.uniform(0, 10), seed=random.randint(1, 200), p=0.3),
+
+            # 在图像上叠加emoji
+            imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5, 1), emoji_size=random.uniform(
+                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.5),
+
+            # 在图像上叠加线段
+            imaugs.OverlayStripes(line_width=random.uniform(0.3, 0.6), line_color=random_RGB(), line_angle=random.uniform(
+                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.15),
+
+            # 将图片像素化
+            imaugs.Pixelization(ratio=random.random(),  p=0.1),
+
+            # 最后调节一下图片尺寸
+            imaugs.Resize(width=width, height=height, p=1.0)
+        ]
+    )
+
+    bg_aug5 = imaugs.Compose(
+        [
+            # 改变图片亮度
+            imaugs.Brightness(factor=random.uniform(0, 3), p=0.2),
+
+            # 改变图片对比度
+            imaugs.Contrast(factor=random.uniform(0, 5), p=0.2),
+
+            # 锐化图片
+            imaugs.Sharpen(factor=random.uniform(10, 20), p=0.2),
+
+            # 改变图像饱和度
+            imaugs.Saturation(factor=random.random(), p=0.2),
+
+            # 随机裁减
+            imaugs.Crop(
+            x1=random.triangular(0.3, 0.49),
+            y1=random.triangular(0.3, 0.49),
+            x2=random.triangular(0.5, 0.9),
+            y2=random.triangular(0.5, 0.9),
+            p=0.3),
+
+            # 将图像变为灰度图
+            imaugs.Grayscale(mode=random.choice(['luminosity', 'average']), p=0.1),
+
+            # 改变图片的长宽比
+            imaugs.RandomAspectRatio(min_ratio=0.3, max_ratio=3.0, p=0.3),
+
+            # 图片垂直翻转
+            imaugs.VFlip(p=0.3),
+
+            # 图像过滤器
+            imaugs.ApplyPILFilter(filter_type=get_ramdom_imagefilter(), p=0.1),
+
+            # 给图片加上边框
+            imaugs.Pad(w_factor=random.uniform(0.1, 0.3), h_factor=random.uniform(
+                0.1, 0.3), color=random_RGB(), p=0.1),
+
+            # 改变图片的观察角度
+            imaugs.PerspectiveTransform(sigma=random.randint(50, 150), dx=random.uniform(
+                0, 10), dy=random.uniform(0, 10), seed=random.randint(1, 200), p=0.3),
+
+            # 在图像上叠加emoji
+            imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5, 1), emoji_size=random.uniform(
+                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.5),
+
+            # 在图像上叠加线段
+            imaugs.OverlayStripes(line_width=random.uniform(0.3, 0.6), line_color=random_RGB(), line_angle=random.uniform(
+                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.15),
+
+            # 将图片像素化
+            imaugs.Pixelization(ratio=random.random(),  p=0.1),
+
+            # 在图片上叠加文字
+            imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1, 0.3), opacity=random.uniform(
+                0.3, 1), color=random_RGB(), x_pos=random.uniform(0.1, 0.6), y_pos=random.uniform(0.1, 0.7), p=0.3),
+
+            # 给图片加上噪声（这个运算很慢）
+            imaugs.RandomNoise(mean=random.random(), var=random.uniform(
+                0.5, 1), seed=random.randint(10, 50),  p=0.08),
+
+            # 最后调节一下图片尺寸
+            imaugs.Resize(width=width, height=height, p=1.0)
+        ]
+    )
+
+    aug_list =[bg_aug0, bg_aug1, bg_aug2, bg_aug3, bg_aug4, bg_aug5]
+    return aug_list[aug_level]
 
 
 # 对最后生成的图片进行增强
-def final_aug():
-    final_aug = imaugs.Compose(
+def final_aug(aug_level=0):
+
+    # 模式0
+    final_aug0 = imaugs.Compose(
         [
-        # 模因格式（在图片上方加文字）
-        imaugs.MemeFormat(text=get_ramdom_string(), opacity=random.uniform(0.3,1), text_color=random_RGB(), caption_height=random.randint(20,200), meme_bg_color=random_RGB(), p=0.1),
+        # 图片随机模糊
+        imaugs.Blur(radius=random.uniform(0, 3), p=0.1),
+        ]
+    )
 
-        # 在图像上叠加emoji
-        imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.7), y_pos=random.uniform(0.3,0.7), p=0.4),
+    # 模式1
+    final_aug1 = imaugs.Compose(
+        [
+            # 图片随机模糊
+            imaugs.Blur(radius=random.uniform(0, 3), p=0.1),
 
-        # 在图像上叠加线段
-        imaugs.OverlayStripes(line_width=random.uniform(0.3,1), line_color=random_RGB(), line_angle=random.uniform(-180, 180), line_density=random.uniform(0.3,1), line_type=get_line_type(), line_opacity=random.uniform(0.5,1),p=0.1),
+            # 在图像上叠加emoji
+            imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.7), y_pos=random.uniform(0.3,0.7), p=0.1),
 
-        # 在图片上叠加文字
-        imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1,0.3), opacity=random.uniform(0.3, 1), color=random_RGB(), x_pos=random.uniform(0.1,0.6), y_pos=random.uniform(0.1,0.7), p=0.1),
+        ]
+    )
 
-        ])
-    return final_aug
+    # 模式2
+    final_aug2 = imaugs.Compose(
+        [
+            # 图片随机模糊
+            imaugs.Blur(radius=random.uniform(0, 3), p=0.1),
+
+            # 在图像上叠加emoji
+            imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.7), y_pos=random.uniform(0.3,0.7), p=0.1),
+
+            # 在图像上叠加线段
+            imaugs.OverlayStripes(line_width=random.uniform(0.2,0.5), line_color=random_RGB(), line_angle=random.uniform(-180, 180), line_density=random.uniform(0.3,1), line_type=get_line_type(), line_opacity=random.uniform(0.5,1),p=0.1),
+
+        ]
+    )
+
+    # 模式3
+    final_aug3 = imaugs.Compose(
+        [
+            # 图片随机模糊
+            imaugs.Blur(radius=random.uniform(0, 3), p=0.1),
+
+            # 在图像上叠加emoji
+            imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.7), y_pos=random.uniform(0.3,0.7), p=0.1),
+
+            # 在图像上叠加线段
+            imaugs.OverlayStripes(line_width=random.uniform(0.2,0.5), line_color=random_RGB(), line_angle=random.uniform(-180, 180), line_density=random.uniform(0.3,1), line_type=get_line_type(), line_opacity=random.uniform(0.5,1),p=0.1),
+
+            # 在图片上叠加文字
+            imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1,0.3), opacity=random.uniform(0.3, 1), color=random_RGB(), x_pos=random.uniform(0.1,0.6), y_pos=random.uniform(0.1,0.7), p=0.1),
+
+        ]
+    )
+
+    # 模式4
+    final_aug4 = imaugs.Compose(
+        [
+            # 图片随机模糊
+            imaugs.Blur(radius=random.uniform(0, 3), p=0.1),
+
+            # 在图像上叠加emoji
+            imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.7), y_pos=random.uniform(0.3,0.7), p=0.1),
+
+            # 在图像上叠加线段
+            imaugs.OverlayStripes(line_width=random.uniform(0.2,0.5), line_color=random_RGB(), line_angle=random.uniform(-180, 180), line_density=random.uniform(0.3,1), line_type=get_line_type(), line_opacity=random.uniform(0.5,1),p=0.1),
+
+            # 在图片上叠加文字
+            imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1,0.3), opacity=random.uniform(0.3, 1), color=random_RGB(), x_pos=random.uniform(0.1,0.6), y_pos=random.uniform(0.1,0.7), p=0.1),
+
+            # 图像过滤器
+            imaugs.ApplyPILFilter(filter_type=get_ramdom_imagefilter(), p=0.1),
+        ]
+    )
+
+    # 模式5
+    final_aug5 = imaugs.Compose(
+        [
+            # 图片随机模糊
+            imaugs.Blur(radius=random.uniform(0, 3), p=0.1),
+
+            # 在图像上叠加emoji
+            imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5,1), emoji_size=random.uniform(0,1), x_pos=random.uniform(0.1,0.7), y_pos=random.uniform(0.3,0.7), p=0.1),
+
+            # 在图像上叠加线段
+            imaugs.OverlayStripes(line_width=random.uniform(0.2,0.5), line_color=random_RGB(), line_angle=random.uniform(-180, 180), line_density=random.uniform(0.3,1), line_type=get_line_type(), line_opacity=random.uniform(0.5,1),p=0.1),
+
+            # 在图片上叠加文字
+            imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1,0.3), opacity=random.uniform(0.3, 1), color=random_RGB(), x_pos=random.uniform(0.1,0.6), y_pos=random.uniform(0.1,0.7), p=0.1),
+
+            # 图像过滤器
+            imaugs.ApplyPILFilter(filter_type=get_ramdom_imagefilter(), p=0.1),
+
+            # 图片随机像素化
+            imaugs.RandomPixelization(min_ratio=0.1, max_ratio=1.0, p=0.1),
+
+        ]
+    )
+    aug_list = [final_aug0, final_aug1, final_aug2, final_aug3, final_aug4, final_aug5]
+    return aug_list[aug_level]
