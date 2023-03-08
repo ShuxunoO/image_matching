@@ -788,7 +788,7 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
 
 
 # 对最后生成的图片进行增强
-def final_aug(aug_level=0):
+def final_aug(aug_level = 0):
 
     # 模式0
     final_aug0 = imaugs.Compose(

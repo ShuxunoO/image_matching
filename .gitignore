@@ -1,4 +1,5 @@
 /ultralytics
+preprocessing/*
 /data_augmentations/output
 /data
 .vscode
