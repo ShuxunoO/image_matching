@@ -184,9 +184,10 @@ def overlay_image(bg_img, overlay):
     over_width = img_width / img_height * over_height
 
     # 计算YOLO标签
-    x = (x_pos * bg_width + over_width / 2) / bg_width
-    y = (y_pos * bg_height + over_height / 2) / bg_height
-    width = over_width / bg_width
+    # 取 min()操作的目的是为了避免有标签值超过1的情况
+    x = min((x_pos * bg_width + over_width / 2) / bg_width, 1.0)
+    y = min((y_pos * bg_height + over_height / 2) / bg_height, 1.0)
+    width = min(over_width / bg_width, 1.0)
     height = overlay_size
     yolo_label = (0, x, y, width, height)
 
