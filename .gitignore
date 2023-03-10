@@ -4,4 +4,4 @@ preprocessing/*
 /data
 .vscode
 .git
-/tests
+# /tests
