@@ -45,16 +45,16 @@ def save_auged_file(out_path, folder_name, img_name, yolo_label, final_img):
 # 读取所有训练图片的名称
 img_list = os.listdir(trainingdata_path)
 bg_img_list = img_list[:19999]
-face_img_list = os.listdir(face_img_path)
-overlay_list = tqdm(face_img_list[:10000], desc='Augmenting images',unit = 'image')
+# face_img_list = os.listdir(face_img_path)
+overlay_list = tqdm(img_list[20000:30000], desc='Augmenting images',unit = 'image')
 
 
 # 按照训练集：测试集： 验证集 = 7：2: 1 的比例构造数据集
 counter = 0
-aug_level = 3
+aug_level = 4
 for img in overlay_list:
     # 每增强十轮之后重新构造数据增强对象
-    if counter % 10 == 0:
+    if counter % 50 == 0:
         bg_aug = generate_bg_aug(width=512, height=512, aug_level = aug_level)
         overlay_aug = generate_overlay_aug(aug_level = aug_level)
         final_aug = final_aug_(aug_level = aug_level)
@@ -62,7 +62,7 @@ for img in overlay_list:
     # 加载图片
     bg_img_name = random.choice(bg_img_list)
     bg_img = Image.open(os.path.join(trainingdata_path, bg_img_name))
-    overlay_img = Image.open(os.path.join(face_img_path, img))
+    overlay_img = Image.open(os.path.join(trainingdata_path, img))
 
     # 对背景图片数据增强
     bg_img = bg_aug(bg_img)

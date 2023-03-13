@@ -145,7 +145,7 @@ def overlay_image(bg_img, overlay):
         将overlay图层粘贴到bg_img图层上，之后返回对应的yolo格式的标签
 
     """
-    overlay_size = random.uniform(0.2, 0.5)
+    overlay_size = random.uniform(0.3, 0.5)
     x_pos = random.uniform(0.1, 0.5)
     y_pos = random.uniform(0.1, 0.5)
 
@@ -169,7 +169,7 @@ def overlay_image(bg_img, overlay):
 
     """
     aug_img = imaugs.overlay_onto_background_image(image=overlay, background_image=bg_img,
-                                                    opacity=random.uniform(0.8, 1), overlay_size=overlay_size, x_pos=x_pos, y_pos=y_pos)
+                                                    opacity=random.uniform(0.3, 1), overlay_size=overlay_size, x_pos=x_pos, y_pos=y_pos)
 
     # 背景图的宽和高
     bg_width, bg_height = bg_img.size
@@ -370,13 +370,13 @@ def generate_overlay_aug(aug_level=0):
             # 改变图像饱和度
             imaugs.Saturation(factor=random.random(), p=0.2),
 
-            # # 随机裁减
-            # imaugs.Crop(
-            #     x1=random.triangular(0.3, 0.49),
-            #     y1=random.triangular(0.3, 0.49),
-            #     x2=random.triangular(0.5, 0.9),
-            #     y2=random.triangular(0.5, 0.9),
-            #     p=0.1),
+            # 随机裁减
+            imaugs.Crop(
+                x1=random.triangular(0.3, 0.49),
+                y1=random.triangular(0.3, 0.49),
+                x2=random.triangular(0.5, 0.9),
+                y2=random.triangular(0.5, 0.9),
+                p=0.1),
 
             # 将图像变为灰度图
             imaugs.Grayscale(mode=random.choice(
@@ -408,8 +408,8 @@ def generate_overlay_aug(aug_level=0):
             #     0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.3),
 
             # 在图像上叠加线段
-            imaugs.OverlayStripes(line_width=random.uniform(0.3, 0.6), line_color=random_RGB(), line_angle=random.uniform(
-                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.3),
+            imaugs.OverlayStripes(line_width=random.uniform(0.3,0.7), line_color=random_RGB(), line_angle=random.uniform(
+                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.4),
 
             # 将图片像素化
             imaugs.Pixelization(ratio=random.random(),  p=0.1),
@@ -432,13 +432,13 @@ def generate_overlay_aug(aug_level=0):
             # 改变图像饱和度
             imaugs.Saturation(factor=random.random(), p=0.2),
 
-            # 随机裁减
+            #随机裁减
             imaugs.Crop(
                 x1=random.triangular(0.3, 0.49),
                 y1=random.triangular(0.3, 0.49),
                 x2=random.triangular(0.5, 0.9),
                 y2=random.triangular(0.5, 0.9),
-                p=0.3),
+                p=0.2),
 
             # 将图像变为灰度图
             imaugs.Grayscale(mode=random.choice(
@@ -746,7 +746,7 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
                 y1=random.triangular(0.3, 0.49),
                 x2=random.triangular(0.5, 0.9),
                 y2=random.triangular(0.5, 0.9),
-                p=0.3),
+                p=0.1),
 
             # 将图像变为灰度图
             imaugs.Grayscale(mode=random.choice(
