@@ -3,9 +3,14 @@ import random
 from PIL import Image
 from utils.data_augmentation_for_yolo_training import generate_overlay_aug, generate_bg_aug, final_aug, overlay_image
 
-training10K_data_path = 'C:/Users/Lenovo/Desktop/AI/image_matching/data/reference_subset/'
-background_img_path = 'C:/Users/Lenovo/Desktop/AI/image_matching/data/training_data_background/'
-output_base_path = 'C:/Users/Lenovo/Desktop/AI/image_matching/data/yolo_training_10K'
+# # 116服务器资源
+# training10K_data_path = 'C:/Users/Lenovo/Desktop/AI/image_matching/data/reference_subset/'
+# background_img_path = 'C:/Users/Lenovo/Desktop/AI/image_matching/data/training_data_background/'
+# output_base_path = 'C:/Users/Lenovo/Desktop/AI/image_matching/data/yolo_training_10K'
+
+# 155服务器资源
+trainingdata_path = '/datassd2/sswang/image_matching/data/isc_data/training_imgs/training/'
+output_base_path = '/datassd2/sswang/image_matching/data/isc_data/yolo_training/'
 
 # 检查路径是否存在，不存在就创建一个文件夹
 def check_dir(dir_path):
@@ -75,7 +80,7 @@ for img in train_img_list:
 
     # 存储增强之后的图片和标签
     # 0--6999编号的图片被放在train文件夹中
-    if 0 <= counter < 7000:
+    if 0 <= counter < 13999:
         save_auged_file(output_base_path, folder_name='train',
                         img_name=img, yolo_label=yolo_label, final_img=overlaied_img)
 

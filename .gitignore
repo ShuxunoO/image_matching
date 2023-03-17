@@ -4,3 +4,6 @@ preprocessing/*
 /data
 .vscode
 *.ipynb_checkpoints
+.git
+# /tests
+/ISC2021
