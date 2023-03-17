@@ -3,3 +3,4 @@ preprocessing/*
 /data_augmentations/output
 /data
 .vscode
+*.ipynb_checkpoints
