@@ -4,8 +4,9 @@ import string
 import numpy as np
 from PIL import ImageFilter, Image, ImageDraw
 import augly.image as imaugs
+from augly.image import utils as imutils
 import augly.image.transforms as transaugs
-
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 # 随机选出RGB三颜色
 def random_RGB():
@@ -50,7 +51,13 @@ def get_ramdom_imagefilter():
 
 # 随机取出一个emoji地址
 def get_ramdom_emoji():
-    emoji_path = '/datassd2/sswang/image_matching/data_augmentations/emojis/'
+    # 155服务器上的emoji地址
+    emoji_path = '/datassd2/sswang/image_matching/data_augmentations/emojis'
+
+    # 116服务器上的emoji地址
+    # emoji_path = '/datassd2/sswang/image_matching/data_augmentations/emojis/'
+
+    # 本地的emoji地址
     # emoji_path = 'C:/Users/Lenovo/Desktop/AI/image_matching/data_augmentations/emojis/'
     emoji_list = os.listdir(emoji_path)
     return os.path.join(emoji_path, random.choice(emoji_list))
@@ -82,43 +89,24 @@ def get_random_overlaytext():
 # 拿到一个随机的截屏背景
 def get_random_screenshot_template():
     screenshot_path = '/datassd2/sswang/image_matching/data_augmentations/screenshot_templates/'
+
+    # 本地资源
     # screenshot_path = 'C:/Users/Lenovo/Desktop/AI/image_matching/data/screenshot_templates/'
     screenshot_list = [
         i for i in os.listdir(screenshot_path) if i.endswith('png')
     ]
     return os.path.join(screenshot_path, random.choice(screenshot_list))
 
+# 随机选出一个mask
+def get_random_mask():
+    # 155服务器上的资源
+    mask_path = '/datassd2/sswang/image_matching/data/masks'
 
-# 制作抖音风格的图片
-class DouyinFilter(object):
+    # 本地资源
+    # screenshot_path = 'C:/Users/Lenovo/Desktop/AI/image_matching/data/screenshot_templates/'
+    screenshot_list = os.listdir(mask_path)
+    return os.path.join(mask_path, random.choice(screenshot_list))
 
-    def __init__(self):
-        pass
-
-    def __call__(self, input_img):
-
-        array_orig = np.array(input_img)
-
-        if array_orig.shape[0] <= 20 or array_orig.shape[1] <= 40:
-            # print('[DouyinFilter]', array_orig.shape)
-            return input_img
-
-        array_r = np.copy(array_orig)
-        array_r[:, :, 1:3] = 255  # cyan
-
-        array_b = np.copy(array_orig)
-        array_b[:, :, 0:2] = 255  # Y
-
-        array_g = np.copy(array_orig)
-        array_g[:, :, [0, 2]] = 255  # R
-
-        result_array = array_r[:-20, 40:, :] + \
-            array_b[20:, :-40, :] + array_g[10:-10, 20:-20, :]
-        result_array[result_array > 255] = 255
-
-        result = Image.fromarray(result_array)
-
-        return result
 
 # 将YOLO标签画出来
 def draw_yolo_rectangle(yolo_label, img):
@@ -139,7 +127,7 @@ def draw_yolo_rectangle(yolo_label, img):
                     point2_ypos)], fill=None, outline="red", width=2)
     return img
 
-
+# 将贴图粘贴到背景图上
 def overlay_image(bg_img, overlay):
     """
         将overlay图层粘贴到bg_img图层上，之后返回对应的yolo格式的标签
@@ -192,6 +180,129 @@ def overlay_image(bg_img, overlay):
     yolo_label = (0, x, y, width, height)
 
     return aug_img, yolo_label
+
+# 制作抖音风格的图片
+class DouyinFilter(object):
+
+    def __init__(self):
+        pass
+
+    def __call__(self, input_img):
+
+        array_orig = np.array(input_img)
+
+        if array_orig.shape[0] <= 20 or array_orig.shape[1] <= 40:
+            # print('[DouyinFilter]', array_orig.shape)
+            return input_img
+
+        array_r = np.copy(array_orig)
+        array_r[:, :, 1:3] = 255  # cyan
+
+        array_b = np.copy(array_orig)
+        array_b[:, :, 0:2] = 255  # Y
+
+        array_g = np.copy(array_orig)
+        array_g[:, :, [0, 2]] = 255  # R
+
+        result_array = array_r[:-20, 40:, :] + \
+            array_b[20:, :-40, :] + array_g[10:-10, 20:-20, :]
+        result_array[result_array > 255] = 255
+
+        result = Image.fromarray(result_array)
+
+        return result
+
+
+# 对图片应用蒙版
+class Mask_IMG(transaugs.BaseTransform):
+    """对图片应用蒙版"""
+
+    def __init__(self, p: float = 1.0):
+        """
+        @param p: the probability of the transform being applied; default value is 1.0
+        """
+        super().__init__(p)
+
+
+    def mask_img(
+        image: Union[str, Image.Image],
+        mask : Image.Image,
+        output_path: Optional[str] = None,
+        metadata: Optional[List[Dict[str, Any]]] = None,
+        bboxes: Optional[List[Tuple]] = None,
+        bbox_format: Optional[str] = None,) ->(Image.Image):
+        """
+        Applies a mask to an image. The mask must be a PIL Image of the same size as the image.
+
+        @param image: the path to an image or a variable of type PIL.Image.Image
+            to be augmented
+
+        @param mask: the path to a mask or a variable of type PIL.Image.Image
+
+        @param output_path: the path in which the resulting image will be stored.
+            If None, the resulting PIL Image will still be returned
+
+        @param metadata: if set to be a list, metadata about the function execution
+            including its name, the source & dest width, height, etc. will be appended
+            to the inputted list. If set to None, no metadata will be appended or returned
+
+        @param bboxes: a list of bounding boxes can be passed in here if desired. If
+            provided, this list will be modified in place such that each bounding box is
+            transformed according to this function
+
+        @param bbox_format: signifies what bounding box format was used in `bboxes`. Must
+            specify `bbox_format` if `bboxes` is provided. Supported bbox_format values are
+            "pascal_voc", "pascal_voc_norm", "coco", and "yolo"
+
+        @returns: PIL.Image， 蒙版覆盖后的图片
+
+        """
+        print("mask_img, Img type: ", type(image))
+        image = imutils.validate_and_load_image(image)
+        func_kwargs = imutils.get_func_kwargs(metadata, locals())
+
+        src_mode = image.mode
+        # Create composite image by blending images using a transparency mask.
+        blank_layer = Image.new('RGBA', image.size, (0,0,0,0))
+        # 修改蒙版尺寸以匹配图片
+        mask = mask.resize(image.size,Image.BILINEAR)
+        masked_img = Image.composite(blank_layer, image, mask)
+        imutils.get_metadata(metadata=metadata, function_name="mask_img", **func_kwargs)
+
+        return imutils.ret_and_save_image(masked_img, output_path, src_mode)
+
+    def apply_transform(
+        self,
+        image: Image.Image,
+        metadata: Optional[List[Dict[str, Any]]] = None,
+        bboxes: Optional[List[Tuple]] = None,
+        bbox_format: Optional[str] = None,
+    ) -> Image.Image:
+        """
+        对图片应用蒙版
+
+        @param image: PIL Image to be augmented
+
+        @param metadata: if set to be a list, metadata about the function execution
+            including its name, the source & dest width, height, etc. will be appended to
+            the inputted list. If set to None, no metadata will be appended or returned
+
+        @param bboxes: a list of bounding boxes can be passed in here if desired. If
+            provided, this list will be modified in place such that each bounding box is
+            transformed according to this function
+
+        @param bbox_format: signifies what bounding box format was used in `bboxes`. Must
+            specify `bbox_format` if `bboxes` is provided. Supported bbox_format values
+            are "pascal_voc", "pascal_voc_norm", "coco", and "yolo"
+
+        @returns: Augmented PIL Image
+        """
+        # 生成蒙版
+        mask = Image.open(get_random_mask()).convert("RGBA")
+        print(type(mask))
+
+        return self.mask_img(image, mask, metadata, bboxes, bbox_format)
+
 
 
 # 对贴图进行增强
