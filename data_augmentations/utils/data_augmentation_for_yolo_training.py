@@ -181,36 +181,114 @@ def overlay_image(bg_img, overlay):
 
     return aug_img, yolo_label
 
-# 制作抖音风格的图片
-class DouyinFilter(object):
 
-    def __init__(self):
-        pass
+def mask_img(
+    image: Union[str, Image.Image],
+    mask : Image.Image,
+    output_path: Optional[str] = None,
+    metadata: Optional[List[Dict[str, Any]]] = None,
+    bboxes: Optional[List[Tuple]] = None,
+    bbox_format: Optional[str] = None,) ->(Image.Image):
+    """
+    Applies a mask to an image. The mask must be a PIL Image of the same size as the image.
 
-    def __call__(self, input_img):
+    @param image: the path to an image or a variable of type PIL.Image.Image
+        to be augmented
 
-        array_orig = np.array(input_img)
+    @param mask: the path to a mask or a variable of type PIL.Image.Image
 
-        if array_orig.shape[0] <= 20 or array_orig.shape[1] <= 40:
-            # print('[DouyinFilter]', array_orig.shape)
-            return input_img
+    @param output_path: the path in which the resulting image will be stored.
+        If None, the resulting PIL Image will still be returned
 
-        array_r = np.copy(array_orig)
-        array_r[:, :, 1:3] = 255  # cyan
+    @param metadata: if set to be a list, metadata about the function execution
+        including its name, the source & dest width, height, etc. will be appended
+        to the inputted list. If set to None, no metadata will be appended or returned
 
-        array_b = np.copy(array_orig)
-        array_b[:, :, 0:2] = 255  # Y
+    @param bboxes: a list of bounding boxes can be passed in here if desired. If
+        provided, this list will be modified in place such that each bounding box is
+        transformed according to this function
 
-        array_g = np.copy(array_orig)
-        array_g[:, :, [0, 2]] = 255  # R
+    @param bbox_format: signifies what bounding box format was used in `bboxes`. Must
+        specify `bbox_format` if `bboxes` is provided. Supported bbox_format values are
+        "pascal_voc", "pascal_voc_norm", "coco", and "yolo"
 
-        result_array = array_r[:-20, 40:, :] + \
-            array_b[20:, :-40, :] + array_g[10:-10, 20:-20, :]
-        result_array[result_array > 255] = 255
+    @returns: PIL.Image， 蒙版覆盖后的图片
 
-        result = Image.fromarray(result_array)
+    """
+    # print("mask_img, Img type1: ", type(image))
+    image = imutils.validate_and_load_image(image)
+    func_kwargs = imutils.get_func_kwargs(metadata, locals())
 
-        return result
+    #  创建一个空白的RGBA图层
+    blank_layer = Image.new('RGBA', image.size, (0,0,0,0))
+
+    # 修改蒙版尺寸以匹配图片
+    mask = mask.resize(image.size,Image.BILINEAR)
+    masked_img = Image.composite(blank_layer, image, mask)
+    src_mode = masked_img.mode
+    imutils.get_metadata(metadata=metadata, function_name="mask_img", **func_kwargs)
+    return imutils.ret_and_save_image(masked_img, output_path, src_mode)
+
+
+def douyin_style(
+        image: Union[str, Image.Image],
+        output_path: Optional[str] = None,
+        metadata: Optional[List[Dict[str, Any]]] = None,
+        bboxes: Optional[List[Tuple]] = None,
+        bbox_format: Optional[str] = None,) ->(Image.Image):
+    """
+
+    给图片加上抖音滤镜
+
+    @param image: the path to an image or a variable of type PIL.Image.Image
+        to be augmented
+
+    @param mask: the path to a mask or a variable of type PIL.Image.Image
+
+    @param output_path: the path in which the resulting image will be stored.
+        If None, the resulting PIL Image will still be returned
+
+    @param metadata: if set to be a list, metadata about the function execution
+        including its name, the source & dest width, height, etc. will be appended
+        to the inputted list. If set to None, no metadata will be appended or returned
+
+    @param bboxes: a list of bounding boxes can be passed in here if desired. If
+        provided, this list will be modified in place such that each bounding box is
+        transformed according to this function
+
+    @param bbox_format: signifies what bounding box format was used in `bboxes`. Must
+        specify `bbox_format` if `bboxes` is provided. Supported bbox_format values are
+        "pascal_voc", "pascal_voc_norm", "coco", and "yolo"
+
+    @returns: PIL.Image， 蒙版覆盖后的图片
+
+    """
+    image = imutils.validate_and_load_image(image)
+    func_kwargs = imutils.get_func_kwargs(metadata, locals())
+
+    array_orig = np.array(image)
+
+    if array_orig.shape[0] <= 20 or array_orig.shape[1] <= 40:
+        # print('[DouyinFilter]', array_orig.shape)
+        return image
+
+    array_r = np.copy(array_orig)
+    array_r[:, :, 1:3] = 255  # cyan
+
+    array_b = np.copy(array_orig)
+    array_b[:, :, 0:2] = 255  # Y
+
+    array_g = np.copy(array_orig)
+    array_g[:, :, [0, 2]] = 255  # R
+
+    result_array = array_r[:-20, 40:, :] + \
+        array_b[20:, :-40, :] + array_g[20:, 40:, :]
+    image = Image.fromarray(result_array)
+
+    src_mode = image.mode
+    imutils.get_metadata(metadata=metadata, function_name="douyin_style", **func_kwargs)
+
+    return imutils.ret_and_save_image(image, output_path, src_mode)
 
 
 # 对图片应用蒙版
@@ -222,54 +300,6 @@ class Mask_IMG(transaugs.BaseTransform):
         @param p: the probability of the transform being applied; default value is 1.0
         """
         super().__init__(p)
-
-
-    def mask_img(
-        image: Union[str, Image.Image],
-        mask : Image.Image,
-        output_path: Optional[str] = None,
-        metadata: Optional[List[Dict[str, Any]]] = None,
-        bboxes: Optional[List[Tuple]] = None,
-        bbox_format: Optional[str] = None,) ->(Image.Image):
-        """
-        Applies a mask to an image. The mask must be a PIL Image of the same size as the image.
-
-        @param image: the path to an image or a variable of type PIL.Image.Image
-            to be augmented
-
-        @param mask: the path to a mask or a variable of type PIL.Image.Image
-
-        @param output_path: the path in which the resulting image will be stored.
-            If None, the resulting PIL Image will still be returned
-
-        @param metadata: if set to be a list, metadata about the function execution
-            including its name, the source & dest width, height, etc. will be appended
-            to the inputted list. If set to None, no metadata will be appended or returned
-
-        @param bboxes: a list of bounding boxes can be passed in here if desired. If
-            provided, this list will be modified in place such that each bounding box is
-            transformed according to this function
-
-        @param bbox_format: signifies what bounding box format was used in `bboxes`. Must
-            specify `bbox_format` if `bboxes` is provided. Supported bbox_format values are
-            "pascal_voc", "pascal_voc_norm", "coco", and "yolo"
-
-        @returns: PIL.Image， 蒙版覆盖后的图片
-
-        """
-        print("mask_img, Img type: ", type(image))
-        image = imutils.validate_and_load_image(image)
-        func_kwargs = imutils.get_func_kwargs(metadata, locals())
-
-        src_mode = image.mode
-        # Create composite image by blending images using a transparency mask.
-        blank_layer = Image.new('RGBA', image.size, (0,0,0,0))
-        # 修改蒙版尺寸以匹配图片
-        mask = mask.resize(image.size,Image.BILINEAR)
-        masked_img = Image.composite(blank_layer, image, mask)
-        imutils.get_metadata(metadata=metadata, function_name="mask_img", **func_kwargs)
-
-        return imutils.ret_and_save_image(masked_img, output_path, src_mode)
 
     def apply_transform(
         self,
@@ -299,9 +329,49 @@ class Mask_IMG(transaugs.BaseTransform):
         """
         # 生成蒙版
         mask = Image.open(get_random_mask()).convert("RGBA")
-        print(type(mask))
+        return mask_img(image, mask, metadata, bboxes, bbox_format)
 
-        return self.mask_img(image, mask, metadata, bboxes, bbox_format)
+
+
+# 制作抖音风格的图片
+class DouyinFilter(transaugs.BaseTransform):
+    """将图片转换为抖音风格"""
+
+    def __init__(self, p: float = 1.0):
+        """
+        @param p: the probability of the transform being applied; default value is 1.0
+        """
+        super().__init__(p)
+
+    def apply_transform(
+        self,
+        image: Image.Image,
+        metadata: Optional[List[Dict[str, Any]]] = None,
+        bboxes: Optional[List[Tuple]] = None,
+        bbox_format: Optional[str] = None,
+    ) -> Image.Image:
+        """
+        对图片应用蒙版
+
+        @param image: PIL Image to be augmented
+
+        @param metadata: if set to be a list, metadata about the function execution
+            including its name, the source & dest width, height, etc. will be appended to
+            the inputted list. If set to None, no metadata will be appended or returned
+
+        @param bboxes: a list of bounding boxes can be passed in here if desired. If
+            provided, this list will be modified in place such that each bounding box is
+            transformed according to this function
+
+        @param bbox_format: signifies what bounding box format was used in `bboxes`. Must
+            specify `bbox_format` if `bboxes` is provided. Supported bbox_format values
+            are "pascal_voc", "pascal_voc_norm", "coco", and "yolo"
+
+        @returns: Augmented PIL Image
+        """
+        return douyin_style(image, metadata, bboxes, bbox_format)
+
+
 
 
 
