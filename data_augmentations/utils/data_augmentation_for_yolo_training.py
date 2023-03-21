@@ -125,6 +125,32 @@ def draw_yolo_rectangle(yolo_label, img):
     draw = ImageDraw.Draw(img)
     draw.rectangle([(point1_xpos, point1_ypos), (point2_xpos,
                     point2_ypos)], fill=None, outline="red", width=2)
+
+    return img
+
+# 将YOLO标签画出来
+# 将YOLO标签画出来
+def draw_yolo_rectangle_fromtxt(yolo_label_file, img):
+    draw = ImageDraw.Draw(img)
+    for label in yolo_label_file.readlines():
+        # print(label)
+        # 将字符串label转化为float类型
+        label = map(float, label.split(" "))
+
+        # 读取YOLO标签
+        _, x, y, width, height = label
+        bg_width, bg_height = img.size
+
+        # 将YOLO标签转化为ImageDraw.Draw.rectangle()方法支持的输入格式
+        over_width = bg_width * width
+        over_height = bg_height * height
+        point1_xpos = bg_width * x - over_width / 2
+        point1_ypos = bg_height * y - over_height / 2
+        point2_xpos = point1_xpos + over_width
+        point2_ypos = point1_ypos + over_height
+
+        draw.rectangle([(point1_xpos, point1_ypos), (point2_xpos,
+                        point2_ypos)], fill=None, outline="red", width=2)
     return img
 
 # 将贴图粘贴到背景图上
@@ -230,7 +256,7 @@ def mask_img(
     return imutils.ret_and_save_image(masked_img, output_path, src_mode)
 
 
-def douyin_style(
+def make_douyin_style(
         image: Union[str, Image.Image],
         output_path: Optional[str] = None,
         metadata: Optional[List[Dict[str, Any]]] = None,
@@ -242,8 +268,6 @@ def douyin_style(
 
     @param image: the path to an image or a variable of type PIL.Image.Image
         to be augmented
-
-    @param mask: the path to a mask or a variable of type PIL.Image.Image
 
     @param output_path: the path in which the resulting image will be stored.
         If None, the resulting PIL Image will still be returned
@@ -260,7 +284,7 @@ def douyin_style(
         specify `bbox_format` if `bboxes` is provided. Supported bbox_format values are
         "pascal_voc", "pascal_voc_norm", "coco", and "yolo"
 
-    @returns: PIL.Image， 蒙版覆盖后的图片
+    @returns: PIL.Image, 使用抖音滤镜后的图片
 
     """
     image = imutils.validate_and_load_image(image)
@@ -292,7 +316,7 @@ def douyin_style(
 
 
 # 对图片应用蒙版
-class Mask_IMG(transaugs.BaseTransform):
+class Mask_Crop(transaugs.BaseTransform):
     """对图片应用蒙版"""
 
     def __init__(self, p: float = 1.0):
@@ -369,8 +393,7 @@ class DouyinFilter(transaugs.BaseTransform):
 
         @returns: Augmented PIL Image
         """
-        return douyin_style(image, metadata, bboxes, bbox_format)
-
+        return make_douyin_style(image, metadata, bboxes, bbox_format)
 
 
 
