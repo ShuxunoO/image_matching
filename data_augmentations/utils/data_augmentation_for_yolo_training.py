@@ -129,7 +129,6 @@ def draw_yolo_rectangle(yolo_label, img):
     return img
 
 # 将YOLO标签画出来
-# 将YOLO标签画出来
 def draw_yolo_rectangle_fromtxt(yolo_label_file, img):
     draw = ImageDraw.Draw(img)
     for label in yolo_label_file.readlines():
