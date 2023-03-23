@@ -107,6 +107,46 @@ def get_random_mask():
     screenshot_list = os.listdir(mask_path)
     return os.path.join(mask_path, random.choice(screenshot_list))
 
+# 保存增强之后的图片和yolo标签
+
+def check_dir(dir_path):
+    """
+        检查路径是否存在，不存在就创建一个文件夹
+
+    Args:
+        dir_path (str): 待检查的路径
+    """
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
+
+
+# def save_auged_file(out_path, folder_name, img_name, yolo_label, final_img):
+#     base_path = os.path.join(out_path, folder_name)
+#     output_img_path = os.path.join(base_path, 'images')
+#     output_label_path = os.path.join(base_path, 'labels')
+
+#     # 检查文件夹
+#     check_dir(output_img_path)
+#     check_dir(output_label_path)
+
+#     # 创建标签文件,存储标签信息
+#     label_name = 'Aug_New' + img_name.split('.')[0] + '.txt'
+#     yolo_label_path = os.path.join(output_label_path, label_name)
+#     with open(yolo_label_path, 'w') as f:
+#         str_ = str(yolo_label[0])
+#         for item in yolo_label[1:]:
+#             str_ = str_ + " " + str(item)
+#         f.write(str_)
+#         f.close()
+#     print("{} saved".format(label_name))
+
+#     # 存储增强之后的图片
+#     aug_image_name = 'Aug_New' + img_name
+#     final_img_path = os.path.join(output_img_path, aug_image_name)
+#     final_img.convert('RGB').save(final_img_path)
+#     print("{} saved".format(aug_image_name))
+
+
 
 # 将YOLO标签画出来
 def draw_yolo_rectangle(yolo_label, img):
@@ -182,7 +222,7 @@ def overlay_image(bg_img, overlay):
 
     """
     aug_img = imaugs.overlay_onto_background_image(image=overlay, background_image=bg_img,
-                                                    opacity=random.uniform(0.3, 1), overlay_size=overlay_size, x_pos=x_pos, y_pos=y_pos)
+                                                    opacity=random.uniform(0.4, 1), overlay_size=overlay_size, x_pos=x_pos, y_pos=y_pos)
 
     # 背景图的宽和高
     bg_width, bg_height = bg_img.size
@@ -314,9 +354,21 @@ def make_douyin_style(
     return imutils.ret_and_save_image(image, output_path, src_mode)
 
 
-def concat_images(img_base_path, col, row, width, height):
+def concat_images(img_list, label_file, col, row, width, height):
+
+    """
+        将图片拼接成一个大图
+    Args:
+        img_list: 图片列表
+        col: 拼接的列数
+        row: 拼接的行数
+        width: 用于拼接的单张图片的宽度
+        height: 用于拼接的单张图片的高度
+
+    Returns:
+        _type_: _description_
+    """
     # img_base_path = "/datassd2/sswang/image_matching/data/isc_data/training_imgs/training"
-    img_file_list= os.listdir(img_base_path)
     selected_images = [os.path.join(img_base_path, img_name) for img_name in random.sample(img_file_list, col*row)]
 
     # 创建一个标签文件
@@ -344,10 +396,10 @@ def concat_images(img_base_path, col, row, width, height):
                 str_ = str(temp_label[0])
                 for item in temp_label[1:]:
                     str_ = str_ + " " + str(item)
-                f.write(str_)
-                f.write("\n")
+                label_file.write(str_)
+                label_file.write("\n")
     f.close()
-    return concat_image
+    return concat_image, label_file
     # display(concat_image) #显示成品图
 
 
@@ -452,12 +504,12 @@ def generate_overlay_aug(aug_level=0):
             imaugs.Saturation(factor=random.random(), p=0.3),
 
             # 随机裁减
-            imaugs.Crop(
-                x1=random.triangular(0.2, 0.4),
-                y1=random.triangular(0.2, 0.4),
-                x2=random.triangular(0.5, 0.9),
-                y2=random.triangular(0.5, 0.9),
-                p=0.1),
+            # imaugs.Crop(
+            #     x1=random.triangular(0.2, 0.4),
+            #     y1=random.triangular(0.2, 0.4),
+            #     x2=random.triangular(0.5, 0.9),
+            #     y2=random.triangular(0.5, 0.9),
+            #     p=0.1),
 
             # 水平翻转
             imaugs.HFlip(p=0.3),
@@ -486,12 +538,12 @@ def generate_overlay_aug(aug_level=0):
             imaugs.Saturation(factor=random.random(), p=0.3),
 
             # 随机裁减
-            imaugs.Crop(
-                x1=random.triangular(0.3, 0.4),
-                y1=random.triangular(0.3, 0.4),
-                x2=random.triangular(0.5, 0.9),
-                y2=random.triangular(0.5, 0.9),
-                p=0.1),
+            # imaugs.Crop(
+            #     x1=random.triangular(0.3, 0.4),
+            #     y1=random.triangular(0.3, 0.4),
+            #     x2=random.triangular(0.5, 0.9),
+            #     y2=random.triangular(0.5, 0.9),
+            #     p=0.1),
 
             # 将图像变为灰度图
             imaugs.Grayscale(mode=random.choice(
@@ -528,12 +580,12 @@ def generate_overlay_aug(aug_level=0):
             imaugs.Saturation(factor=random.random(), p=0.2),
 
             # 随机裁减
-            imaugs.Crop(
-                x1=random.triangular(0.2, 0.4),
-                y1=random.triangular(0.2, 0.4),
-                x2=random.triangular(0.5, 0.9),
-                y2=random.triangular(0.5, 0.9),
-                p=0.1),
+            # imaugs.Crop(
+            #     x1=random.triangular(0.2, 0.4),
+            #     y1=random.triangular(0.2, 0.4),
+            #     x2=random.triangular(0.5, 0.9),
+            #     y2=random.triangular(0.5, 0.9),
+            #     p=0.1),
 
             # 水平翻转
             imaugs.HFlip(p=0.4),
@@ -573,12 +625,12 @@ def generate_overlay_aug(aug_level=0):
             imaugs.Saturation(factor=random.random(), p=0.2),
 
             # 随机裁减
-            imaugs.Crop(
-                x1=random.triangular(0.2, 0.4),
-                y1=random.triangular(0.2, 0.4),
-                x2=random.triangular(0.5, 0.9),
-                y2=random.triangular(0.5, 0.9),
-                p=0.1),
+            # imaugs.Crop(
+            #     x1=random.triangular(0.2, 0.4),
+            #     y1=random.triangular(0.2, 0.4),
+            #     x2=random.triangular(0.5, 0.9),
+            #     y2=random.triangular(0.5, 0.9),
+            #     p=0.1),
 
             # 将图像变为灰度图
             imaugs.Grayscale(mode=random.choice(
@@ -622,12 +674,12 @@ def generate_overlay_aug(aug_level=0):
             imaugs.Saturation(factor=random.random(), p=0.2),
 
             # 随机裁减
-            imaugs.Crop(
-                x1=random.triangular(0.2, 0.4),
-                y1=random.triangular(0.2, 0.4),
-                x2=random.triangular(0.5, 0.9),
-                y2=random.triangular(0.5, 0.9),
-                p=0.1),
+            # imaugs.Crop(
+            #     x1=random.triangular(0.2, 0.4),
+            #     y1=random.triangular(0.2, 0.4),
+            #     x2=random.triangular(0.5, 0.9),
+            #     y2=random.triangular(0.5, 0.9),
+            #     p=0.1),
 
             # 将图像变为灰度图
             imaugs.Grayscale(mode=random.choice(
@@ -688,12 +740,12 @@ def generate_overlay_aug(aug_level=0):
             imaugs.Saturation(factor=random.random(), p=0.2),
 
             #随机裁减
-            imaugs.Crop(
-                x1=random.triangular(0.2, 0.4),
-                y1=random.triangular(0.2, 0.4),
-                x2=random.triangular(0.5, 0.9),
-                y2=random.triangular(0.5, 0.9),
-                p=0.2),
+            # imaugs.Crop(
+            #     x1=random.triangular(0.2, 0.4),
+            #     y1=random.triangular(0.2, 0.4),
+            #     x2=random.triangular(0.5, 0.9),
+            #     y2=random.triangular(0.5, 0.9),
+            #     p=0.2),
 
             # 将图像变为灰度图
             imaugs.Grayscale(mode=random.choice(
@@ -1077,7 +1129,7 @@ def final_aug_(aug_level=0):
 
             # 在图像上叠加emoji
             imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5, 1), emoji_size=random.uniform(
-                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.1),
+                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.2),
 
             # 给图片加上抖音蒙版
             DouyinFilter(p=0.1),
@@ -1092,11 +1144,11 @@ def final_aug_(aug_level=0):
 
             # 在图像上叠加emoji
             imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5, 1), emoji_size=random.uniform(
-                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.1),
+                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.2),
 
             # 在图像上叠加线段
             imaugs.OverlayStripes(line_width=random.uniform(0.2, 0.5), line_color=random_RGB(), line_angle=random.uniform(
-                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.1),
+                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.2),
 
             # 给图片加上抖音蒙版
             DouyinFilter(p=0.1),
@@ -1111,11 +1163,11 @@ def final_aug_(aug_level=0):
 
             # 在图像上叠加emoji
             imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5, 1), emoji_size=random.uniform(
-                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.1),
+                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.2),
 
             # 在图像上叠加线段
             imaugs.OverlayStripes(line_width=random.uniform(0.2, 0.5), line_color=random_RGB(), line_angle=random.uniform(
-                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.1),
+                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.2),
 
             # 在图片上叠加文字
             imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1, 0.3), opacity=random.uniform(
@@ -1135,11 +1187,11 @@ def final_aug_(aug_level=0):
 
             # 在图像上叠加emoji
             imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5, 1), emoji_size=random.uniform(
-                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.1),
+                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.2),
 
             # 在图像上叠加线段
             imaugs.OverlayStripes(line_width=random.uniform(0.2, 0.5), line_color=random_RGB(), line_angle=random.uniform(
-                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.1),
+                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.2),
 
             # 在图片上叠加文字
             imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1, 0.3), opacity=random.uniform(
@@ -1161,11 +1213,11 @@ def final_aug_(aug_level=0):
 
             # 在图像上叠加emoji
             imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5, 1), emoji_size=random.uniform(
-                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.1),
+                0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.2),
 
             # 在图像上叠加线段
             imaugs.OverlayStripes(line_width=random.uniform(0.2, 0.5), line_color=random_RGB(), line_angle=random.uniform(
-                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.1),
+                -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.2),
 
             # 在图片上叠加文字
             imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1, 0.3), opacity=random.uniform(
