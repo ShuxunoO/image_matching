@@ -768,10 +768,10 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.2, 0.4),
-                y1=random.triangular(0.2, 0.4),
-                x2=random.triangular(0.5, 0.9),
-                y2=random.triangular(0.5, 0.9),
+                x1=random.triangular(0.1, 0.3),
+                y1=random.triangular(0.1, 0.3),
+                x2=random.triangular(0.6, 0.9),
+                y2=random.triangular(0.6, 0.9),
                 p=0.3),
 
             # 水平翻转
@@ -801,10 +801,10 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.2, 0.4),
-                y1=random.triangular(0.2, 0.4),
-                x2=random.triangular(0.5, 0.9),
-                y2=random.triangular(0.5, 0.9),
+                x1=random.triangular(0.1, 0.3),
+                y1=random.triangular(0.1, 0.3),
+                x2=random.triangular(0.6, 0.9),
+                y2=random.triangular(0.6, 0.9),
                 p=0.3),
 
             # 将图像变为灰度图
@@ -841,10 +841,10 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.2, 0.4),
-                y1=random.triangular(0.2, 0.4),
-                x2=random.triangular(0.5, 0.9),
-                y2=random.triangular(0.5, 0.9),
+                x1=random.triangular(0.1, 0.3),
+                y1=random.triangular(0.1, 0.3),
+                x2=random.triangular(0.6, 0.9),
+                y2=random.triangular(0.6, 0.9),
                 p=0.3),
 
             # 水平翻转
@@ -889,10 +889,10 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.2, 0.4),
-                y1=random.triangular(0.2, 0.4),
-                x2=random.triangular(0.5, 0.9),
-                y2=random.triangular(0.5, 0.9),
+                x1=random.triangular(0.1, 0.3),
+                y1=random.triangular(0.1, 0.3),
+                x2=random.triangular(0.6, 0.9),
+                y2=random.triangular(0.6, 0.9),
                 p=0.3),
 
             # 将图像变为灰度图
@@ -941,10 +941,10 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.2, 0.4),
-                y1=random.triangular(0.2, 0.4),
-                x2=random.triangular(0.5, 0.9),
-                y2=random.triangular(0.5, 0.9),
+                x1=random.triangular(0.1, 0.3),
+                y1=random.triangular(0.1, 0.3),
+                x2=random.triangular(0.6, 0.9),
+                y2=random.triangular(0.6, 0.9),
                 p=0.3),
 
             # 将图像变为灰度图
@@ -1000,10 +1000,10 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.2, 0.4),
-                y1=random.triangular(0.2, 0.4),
-                x2=random.triangular(0.5, 0.9),
-                y2=random.triangular(0.5, 0.9),
+                x1=random.triangular(0.1, 0.3),
+                y1=random.triangular(0.1, 0.3),
+                x2=random.triangular(0.6, 0.9),
+                y2=random.triangular(0.6, 0.9),
                 p=0.1),
 
             # 将图像变为灰度图
