@@ -314,6 +314,44 @@ def make_douyin_style(
     return imutils.ret_and_save_image(image, output_path, src_mode)
 
 
+def concat_images(img_base_path, col, row, width, height):
+    # img_base_path = "/datassd2/sswang/image_matching/data/isc_data/training_imgs/training"
+    img_file_list= os.listdir(img_base_path)
+    selected_images = [os.path.join(img_base_path, img_name) for img_name in random.sample(img_file_list, col*row)]
+
+    # 创建一个标签文件
+    with open("/datassd2/sswang/image_matching/data_augmentations/utils/tests/grid_label.txt", 'w') as f:
+    #进行图片的复制拼接
+        image_files = []
+        #读取所有用于拼接的图片
+        for index in selected_images:
+            image_files.append(Image.open(index).resize((width, height),Image.ANTIALIAS))
+        #创建成品图的画布
+        #第一个参数RGB表示创建RGB彩色图，第二个参数传入元组指定图片大小，第三个参数可指定颜色，默认为黑色
+        concat_image = Image.new('RGB', (width * col, height * row))
+        # 将图片以中心和边界值分解成网格
+        grid_col = col * 2
+        grid_row = row * 2
+        width = 1 / col
+        height = 1 / row
+        for item_row in range(row):
+            for item_col in range(col):
+                #对图片进行逐行拼接
+                #paste方法第一个参数指定需要拼接的图片，第二个参数为二元元组（指定复制位置的左上角坐标）
+                #或四元元组（指定复制位置的左上角和右下角坐标）
+                concat_image.paste(image_files[col * item_row + item_col], (width * col, height * row))
+                temp_label = (0, (col * 2 + 1) / grid_col , (row * 2 + 1) / grid_row, width, height)
+                str_ = str(temp_label[0])
+                for item in temp_label[1:]:
+                    str_ = str_ + " " + str(item)
+                f.write(str_)
+                f.write("\n")
+    f.close()
+    return concat_image
+    # display(concat_image) #显示成品图
+
+
+
 # 对图片应用蒙版
 class Mask_Crop(transaugs.BaseTransform):
     """对图片应用蒙版"""
@@ -396,7 +434,6 @@ class DouyinFilter(transaugs.BaseTransform):
 
 
 
-
 # 对贴图进行增强
 def generate_overlay_aug(aug_level=0):
     # 模式0
@@ -416,8 +453,8 @@ def generate_overlay_aug(aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.2, 0.49),
-                y1=random.triangular(0.2, 0.49),
+                x1=random.triangular(0.2, 0.4),
+                y1=random.triangular(0.2, 0.4),
                 x2=random.triangular(0.5, 0.9),
                 y2=random.triangular(0.5, 0.9),
                 p=0.1),
@@ -427,6 +464,9 @@ def generate_overlay_aug(aug_level=0):
 
             # 图片旋转
             imaugs.Rotate(degrees=random.uniform(-180, 180), p=0.3),
+
+            # 给图片应用蒙版
+            Mask_Crop(p=0.3)
 
         ])
 
@@ -447,8 +487,8 @@ def generate_overlay_aug(aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.3, 0.49),
-                y1=random.triangular(0.3, 0.49),
+                x1=random.triangular(0.3, 0.4),
+                y1=random.triangular(0.3, 0.4),
                 x2=random.triangular(0.5, 0.9),
                 y2=random.triangular(0.5, 0.9),
                 p=0.1),
@@ -464,7 +504,10 @@ def generate_overlay_aug(aug_level=0):
             imaugs.HFlip(p=0.2),
 
             # 图片垂直翻转
-            imaugs.VFlip(p=0.2)
+            imaugs.VFlip(p=0.2),
+
+            # 给图片应用蒙版
+            Mask_Crop(p=0.3)
 
         ]
     )
@@ -486,8 +529,8 @@ def generate_overlay_aug(aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.2, 0.49),
-                y1=random.triangular(0.2, 0.49),
+                x1=random.triangular(0.2, 0.4),
+                y1=random.triangular(0.2, 0.4),
                 x2=random.triangular(0.5, 0.9),
                 y2=random.triangular(0.5, 0.9),
                 p=0.1),
@@ -508,6 +551,9 @@ def generate_overlay_aug(aug_level=0):
             # 倾斜图片
             imaugs.Skew(skew_factor=random.uniform(-2, 2),
                         axis=random.choice([0, 1]), p=0.1),
+
+            # 给图片应用蒙版
+            Mask_Crop(p=0.3)
         ]
     )
 
@@ -526,13 +572,13 @@ def generate_overlay_aug(aug_level=0):
             # 改变图像饱和度
             imaugs.Saturation(factor=random.random(), p=0.2),
 
-            # # 随机裁减
-            # imaugs.Crop(
-            #     x1=random.triangular(0.3, 0.49),
-            #     y1=random.triangular(0.3, 0.49),
-            #     x2=random.triangular(0.5, 0.9),
-            #     y2=random.triangular(0.5, 0.9),
-            #     p=0.1),
+            # 随机裁减
+            imaugs.Crop(
+                x1=random.triangular(0.2, 0.4),
+                y1=random.triangular(0.2, 0.4),
+                x2=random.triangular(0.5, 0.9),
+                y2=random.triangular(0.5, 0.9),
+                p=0.1),
 
             # 将图像变为灰度图
             imaugs.Grayscale(mode=random.choice(
@@ -555,6 +601,8 @@ def generate_overlay_aug(aug_level=0):
             imaugs.PerspectiveTransform(sigma=random.randint(50, 100), dx=random.uniform(
                 0, 10), dy=random.uniform(0, 10), seed=random.randint(1, 200), p=0.3),
 
+            # 给图片应用蒙版
+            Mask_Crop(p=0.3)
         ]
     )
 
@@ -575,8 +623,8 @@ def generate_overlay_aug(aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.3, 0.49),
-                y1=random.triangular(0.3, 0.49),
+                x1=random.triangular(0.2, 0.4),
+                y1=random.triangular(0.2, 0.4),
                 x2=random.triangular(0.5, 0.9),
                 y2=random.triangular(0.5, 0.9),
                 p=0.1),
@@ -590,6 +638,10 @@ def generate_overlay_aug(aug_level=0):
 
             # 图片垂直翻转
             imaugs.VFlip(p=0.3),
+
+
+            # 给图片应用蒙版
+            Mask_Crop(p=0.3),
 
             # 图像过滤器
             imaugs.ApplyPILFilter(filter_type=get_ramdom_imagefilter(), p=0.1),
@@ -637,8 +689,8 @@ def generate_overlay_aug(aug_level=0):
 
             #随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.3, 0.49),
-                y1=random.triangular(0.3, 0.49),
+                x1=random.triangular(0.2, 0.4),
+                y1=random.triangular(0.2, 0.4),
                 x2=random.triangular(0.5, 0.9),
                 y2=random.triangular(0.5, 0.9),
                 p=0.2),
@@ -652,6 +704,9 @@ def generate_overlay_aug(aug_level=0):
 
             # 图片垂直翻转
             imaugs.VFlip(p=0.3),
+
+            # 给图片应用蒙版
+            Mask_Crop(p=0.3),
 
             # 图像过滤器
             imaugs.ApplyPILFilter(filter_type=get_ramdom_imagefilter(), p=0.1),
@@ -713,8 +768,8 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.2, 0.49),
-                y1=random.triangular(0.2, 0.49),
+                x1=random.triangular(0.2, 0.4),
+                y1=random.triangular(0.2, 0.4),
                 x2=random.triangular(0.5, 0.9),
                 y2=random.triangular(0.5, 0.9),
                 p=0.3),
@@ -746,8 +801,8 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.3, 0.49),
-                y1=random.triangular(0.3, 0.49),
+                x1=random.triangular(0.2, 0.4),
+                y1=random.triangular(0.2, 0.4),
                 x2=random.triangular(0.5, 0.9),
                 y2=random.triangular(0.5, 0.9),
                 p=0.3),
@@ -786,8 +841,8 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.2, 0.49),
-                y1=random.triangular(0.2, 0.49),
+                x1=random.triangular(0.2, 0.4),
+                y1=random.triangular(0.2, 0.4),
                 x2=random.triangular(0.5, 0.9),
                 y2=random.triangular(0.5, 0.9),
                 p=0.3),
@@ -834,8 +889,8 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.3, 0.49),
-                y1=random.triangular(0.3, 0.49),
+                x1=random.triangular(0.2, 0.4),
+                y1=random.triangular(0.2, 0.4),
                 x2=random.triangular(0.5, 0.9),
                 y2=random.triangular(0.5, 0.9),
                 p=0.3),
@@ -886,8 +941,8 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.3, 0.49),
-                y1=random.triangular(0.3, 0.49),
+                x1=random.triangular(0.2, 0.4),
+                y1=random.triangular(0.2, 0.4),
                 x2=random.triangular(0.5, 0.9),
                 y2=random.triangular(0.5, 0.9),
                 p=0.3),
@@ -945,8 +1000,8 @@ def generate_bg_aug(width=224, height=224, aug_level=0):
 
             # 随机裁减
             imaugs.Crop(
-                x1=random.triangular(0.3, 0.49),
-                y1=random.triangular(0.3, 0.49),
+                x1=random.triangular(0.2, 0.4),
+                y1=random.triangular(0.2, 0.4),
                 x2=random.triangular(0.5, 0.9),
                 y2=random.triangular(0.5, 0.9),
                 p=0.1),
@@ -1008,6 +1063,9 @@ def final_aug_(aug_level=0):
         [
             # 图片随机模糊
             imaugs.Blur(radius=random.uniform(0, 3), p=0.1),
+
+            # 给图片加上抖音蒙版
+            DouyinFilter(p=0.1),
         ]
     )
 
@@ -1021,6 +1079,8 @@ def final_aug_(aug_level=0):
             imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5, 1), emoji_size=random.uniform(
                 0, 1), x_pos=random.uniform(0.1, 0.7), y_pos=random.uniform(0.3, 0.7), p=0.1),
 
+            # 给图片加上抖音蒙版
+            DouyinFilter(p=0.1),
         ]
     )
 
@@ -1038,6 +1098,8 @@ def final_aug_(aug_level=0):
             imaugs.OverlayStripes(line_width=random.uniform(0.2, 0.5), line_color=random_RGB(), line_angle=random.uniform(
                 -180, 180), line_density=random.uniform(0.3, 1), line_type=get_line_type(), line_opacity=random.uniform(0.5, 1), p=0.1),
 
+            # 给图片加上抖音蒙版
+            DouyinFilter(p=0.1),
         ]
     )
 
@@ -1058,6 +1120,9 @@ def final_aug_(aug_level=0):
             # 在图片上叠加文字
             imaugs.OverlayText(text=get_random_overlaytext(), font_size=random.uniform(0.1, 0.3), opacity=random.uniform(
                 0.3, 1), color=random_RGB(), x_pos=random.uniform(0.1, 0.6), y_pos=random.uniform(0.1, 0.7), p=0.1),
+
+            # 给图片加上抖音蒙版
+            DouyinFilter(p=0.1),
 
         ]
     )
@@ -1082,6 +1147,9 @@ def final_aug_(aug_level=0):
 
             # 图像过滤器
             imaugs.ApplyPILFilter(filter_type=get_ramdom_imagefilter(), p=0.1),
+
+            # 给图片加上抖音蒙版
+            DouyinFilter(p=0.1),
         ]
     )
 
@@ -1108,6 +1176,9 @@ def final_aug_(aug_level=0):
 
             # 图片随机像素化
             imaugs.RandomPixelization(min_ratio=0.1, max_ratio=1.0, p=0.1),
+
+            # 给图片加上抖音蒙版
+            DouyinFilter(p=0.1),
 
         ]
     )

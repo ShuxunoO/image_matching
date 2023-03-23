@@ -6,7 +6,8 @@ from utils.data_augmentation_for_yolo_training import generate_overlay_aug, gene
 
 
 # 155服务器资源
-trainingdata_path = '/datassd2/sswang/image_matching/data/isc_data/training_imgs/training/'
+overlay_img_path = '/datassd2/sswang/image_matching/data/isc_data/training_imgs/training/'
+bg_img_path = '/datassd2/sswang/image_matching/data/isc_data/training_imgs/training_bg/'
 face_img_path = '/datassd2/sswang/image_matching/data/isc_data/training_imgs/faces/'
 output_base_path = '/datassd2/sswang/image_matching/data/isc_data/yolo_training/'
 
