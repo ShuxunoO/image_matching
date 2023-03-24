@@ -20,8 +20,8 @@ bg_img_list = os.listdir(bg_img_path)
 face_img_path = '/datassd2/sswang/image_matching/data/isc_data/training_imgs/faces/'
 face_img_list = os.listdir(face_img_path)
 
-output_base_path = '/datassd2/sswang/image_matching/data/isc_data/yolo_training/'
-# output_base_path = '/datassd2/sswang/image_matching/data/test_output/'
+# output_base_path = '/datassd2/sswang/image_matching/data/isc_data/yolo_training/'
+output_base_path = '/datassd2/sswang/image_matching/data/test_output/'
 
 
 
@@ -55,11 +55,13 @@ def save_auged_file(out_path, folder_name, img_name, yolo_label, final_img):
         保存增强之后的图片和yolo标签
 
     Args:
+
         out_path (str): 输出文件的基础路径
         folder_name (str): 用于保存文件夹名称
         img_name (str): 图片的名称
         yolo_label (obj): YOLO label对象
         final_img (obj): 最后生成的图片对象
+
     """
     base_path = os.path.join(out_path, folder_name)
     output_img_path = os.path.join(base_path, 'images')
@@ -104,7 +106,7 @@ def data_augmentation(overlay_list, aug_level=0, folder_name='train'):
     counter = 0
     for img in overlay_list:
         # 每增强十轮之后重新构造数据增强对象
-        if counter % 50 == 0:
+        if counter % 10 == 0:
             bg_aug = generate_bg_aug(
                 width=512, height=512, aug_level=aug_level)
             overlay_aug = generate_overlay_aug(aug_level=aug_level)
@@ -112,7 +114,7 @@ def data_augmentation(overlay_list, aug_level=0, folder_name='train'):
 
         # 加载图片
         bg_img = random_choice_bgimg(bg_img_list)
-        overlay_img = Image.open(os.path.join(overlay_img_path, img)).convert('RGBA')
+        overlay_img = Image.open(os.path.join(face_img_path, img)).convert('RGBA')
 
         # 对背景图片数据增强
         bg_img = bg_aug(bg_img)
@@ -134,9 +136,7 @@ def data_augmentation(overlay_list, aug_level=0, folder_name='train'):
         counter += 1
 
 
-
-
-def generate_grid_img(height = 512, width = 512, aug_level=0,  folder_name='train', index=0):
+def generate_grid_img(height = 512, width = 512, aug_level= 0,  folder_name='train', index=0):
     """
         生成网格图片
 
@@ -157,7 +157,9 @@ def generate_grid_img(height = 512, width = 512, aug_level=0,  folder_name='trai
     img_list = [Image.open(img) for img in selected_images]
 
     # 生成存放标签的文件
-    label_file = open(os.path.join(output_base_path, folder_name, "labels", 'Aug_New{}.txt'.format(index)), 'w')
+    label_name = 'Aug_New_Gride{}.txt'.format(index)
+    label_file = open(os.path.join(output_base_path, folder_name, "labels", label_name), 'w')
+    print("{} saved".format(label_name))
 
 
     # 生成网格图片 和 对应的标签
@@ -167,18 +169,14 @@ def generate_grid_img(height = 512, width = 512, aug_level=0,  folder_name='trai
     final_aug = final_aug_(aug_level=aug_level)
 
     # 对网格图进行数据增强
-    final_img = final_aug(concat_image).resize((width, height),Image.ANTIALIAS)
+    # final_img = final_aug(concat_image).resize((width, height), Image.BICUBIC)
+    final_img = final_aug(concat_image)
+    # Image.ANTIALIAS
 
     # 存储增强之后的图片和标签
-    final_img.save(os.path.join(output_base_path, folder_name, "images",'Aug_New{}.jpg'.format(index)))
-
-
-
-
-
-
-
-
+    img_name = 'Aug_New_Gride{}.jpg'.format(index)
+    final_img.save(os.path.join(output_base_path, folder_name, "images", img_name))
+    print("{} saved".format(img_name))
 
 
 # 进程测试函数
@@ -209,7 +207,7 @@ if __name__ == "__main__":
     overlay_img_subset_1 = overlay_img_list[0:50000]
     overlay_img_subset_2 = overlay_img_list[50000:65000]
     overlay_img_subset_3 = overlay_img_list[65000:70000]
-    face_img_subset_1 = face_img_list[0:6]
+    face_img_subset_1 = face_img_list[0:24000]
     face_img_subset_2 = face_img_list[24000:25800]
 
     # overlay_img_for_each_pool = chunk_list(overlay_img_subset_1, 10000)
@@ -246,21 +244,19 @@ if __name__ == "__main__":
     # pool.join()
 
 
-    # face_img_for_each_pool = chunk_list(face_img_subset_1,1)
+    # face_img_for_each_pool = chunk_list(face_img_subset_2,300)
     # # 创建一个包含20个进程的进程池
-    # pool = mp.Pool(processes = 10)
+    # pool = mp.Pool(processes = 20)
     # for index in range(len(face_img_for_each_pool)):
-    #     overlay_img_for_each_processing = chunk_list(face_img_for_each_pool[index], 1)
+    #     overlay_img_for_each_processing = chunk_list(face_img_for_each_pool[index], 20)
     #     for sub_list in overlay_img_for_each_processing:
     #         # 维持执行的进程总数为20，当一个进程执行完后启动一个新进程.
-    #         pool.apply_async(data_augmentation, args=(sub_list, index, "train",))
+    #         pool.apply_async(data_augmentation, args=(sub_list, index, "valid",))
     # pool.close()
     # pool.join()
+    for i in range(5):
+        generate_grid_img(index = i)
 
-
-
-
-    
 
     end_time = time.time()
     print("time cost: {}".format(end_time - start_time))

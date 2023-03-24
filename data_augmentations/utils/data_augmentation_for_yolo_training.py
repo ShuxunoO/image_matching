@@ -222,7 +222,7 @@ def overlay_image(bg_img, overlay):
 
     """
     aug_img = imaugs.overlay_onto_background_image(image=overlay, background_image=bg_img,
-                                                    opacity=random.uniform(0.4, 1), overlay_size=overlay_size, x_pos=x_pos, y_pos=y_pos)
+                                                    opacity=random.uniform(0.55, 1), overlay_size=overlay_size, x_pos=x_pos, y_pos=y_pos)
 
     # 背景图的宽和高
     bg_width, bg_height = bg_img.size
@@ -371,7 +371,7 @@ def concat_images(img_list, label_file, col, row, width, height):
 
     # 更改用拼接的图片大小
     for index in img_list:
-        index.resize((width, height),Image.ANTIALIAS)
+        index.resize((width, height), Image.BICUBIC)
 
     #创建成品图的画布
     #第一个参数RGB表示创建RGB彩色图，第二个参数传入元组指定图片大小，第三个参数可指定颜色，默认为黑色
@@ -379,15 +379,15 @@ def concat_images(img_list, label_file, col, row, width, height):
     # 将图片以中心和边界值分解成网格
     grid_col = col * 2
     grid_row = row * 2
-    width = 1 / col
-    height = 1 / row
+    label_width = 1 / col
+    label_height = 1 / row
     for item_row in range(row):
         for item_col in range(col):
             #对图片进行逐行拼接
             #paste方法第一个参数指定需要拼接的图片，第二个参数为二元元组（指定复制位置的左上角坐标）
             #或四元元组（指定复制位置的左上角和右下角坐标）
-            concat_image.paste(img_list[col * item_row + item_col], (width * col, height * row))
-            temp_label = (0, (col * 2 + 1) / grid_col , (row * 2 + 1) / grid_row, width, height)
+            concat_image.paste(img_list[col * item_row + item_col], (width * col, height * row),  mask=None)
+            temp_label = (0, (col * 2 + 1) / grid_col , (row * 2 + 1) / grid_row, label_width, label_height)
             str_ = str(temp_label[0])
             for item in temp_label[1:]:
                 str_ = str_ + " " + str(item)
@@ -509,10 +509,10 @@ def generate_overlay_aug(aug_level=0):
             imaugs.HFlip(p=0.3),
 
             # 图片旋转
-            imaugs.Rotate(degrees=random.uniform(-180, 180), p=0.3),
+            imaugs.Rotate(degrees=random.uniform(-90, 90), p=0.1),
 
             # 给图片应用蒙版
-            Mask_Crop(p=0.3)
+            # Mask_Crop(p=0.03)
 
         ])
 
@@ -552,8 +552,11 @@ def generate_overlay_aug(aug_level=0):
             # 图片垂直翻转
             imaugs.VFlip(p=0.2),
 
+            # 图片旋转
+            imaugs.Rotate(degrees=random.uniform(-90, 90), p=0.1),
+
             # 给图片应用蒙版
-            Mask_Crop(p=0.3)
+            # Mask_Crop(p=0.03)
 
         ]
     )
@@ -585,7 +588,7 @@ def generate_overlay_aug(aug_level=0):
             imaugs.HFlip(p=0.4),
 
             # 图片旋转
-            imaugs.Rotate(degrees=random.uniform(-180, 180), p=0.4),
+            imaugs.Rotate(degrees=random.uniform(-90, 90), p=0.1),
 
             # 改变图像画质的压缩质量
             imaugs.EncodingQuality(quality=random.randint(20, 100), p=0.2),
@@ -599,7 +602,7 @@ def generate_overlay_aug(aug_level=0):
                         axis=random.choice([0, 1]), p=0.1),
 
             # 给图片应用蒙版
-            Mask_Crop(p=0.3)
+            # Mask_Crop(p=0.03)
         ]
     )
 
@@ -647,8 +650,11 @@ def generate_overlay_aug(aug_level=0):
             imaugs.PerspectiveTransform(sigma=random.randint(50, 100), dx=random.uniform(
                 0, 10), dy=random.uniform(0, 10), seed=random.randint(1, 200), p=0.3),
 
+            # 图片旋转
+            imaugs.Rotate(degrees=random.uniform(-90, 90), p=0.1),
+
             # 给图片应用蒙版
-            Mask_Crop(p=0.3)
+            # Mask_Crop(p=0.03)
         ]
     )
 
@@ -685,9 +691,11 @@ def generate_overlay_aug(aug_level=0):
             # 图片垂直翻转
             imaugs.VFlip(p=0.3),
 
+            # 图片旋转
+            imaugs.Rotate(degrees=random.uniform(-90, 90), p=0.1),
 
             # 给图片应用蒙版
-            Mask_Crop(p=0.3),
+            # Mask_Crop(p=0.03),
 
             # 图像过滤器
             imaugs.ApplyPILFilter(filter_type=get_ramdom_imagefilter(), p=0.1),
@@ -752,7 +760,7 @@ def generate_overlay_aug(aug_level=0):
             imaugs.VFlip(p=0.3),
 
             # 给图片应用蒙版
-            Mask_Crop(p=0.3),
+            # Mask_Crop(p=0.03),
 
             # 图像过滤器
             imaugs.ApplyPILFilter(filter_type=get_ramdom_imagefilter(), p=0.1),
@@ -764,6 +772,9 @@ def generate_overlay_aug(aug_level=0):
             # 改变图片的观察角度
             imaugs.PerspectiveTransform(sigma=random.randint(50, 150), dx=random.uniform(
                 0, 10), dy=random.uniform(0, 10), seed=random.randint(1, 200), p=0.3),
+
+            # 图片旋转
+            imaugs.Rotate(degrees=random.uniform(-90, 90), p=0.1),
 
             # 在图像上叠加emoji
             imaugs.OverlayEmoji(emoji_path=get_ramdom_emoji(), opacity=random.uniform(0.5, 1), emoji_size=random.uniform(
