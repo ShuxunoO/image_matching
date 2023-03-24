@@ -10,6 +10,9 @@ Win10 训练CLI命令
 
 155服务器
 ### 训练
+> yolo task=detect mode=train model=/datassd2/sswang/image_matching/data/isc_data/yolo_training/overlay_detect_data.yaml data=/datassd2/sswang/image_matching/data/isc_data/yolo_training/overlay_detect_data.yaml epochs=20 imgsz=512 workers=4 device=0,1,2,3 resume=True
+
+### 断点回复训练
 > yolo task=detect mode=train model=/datassd2/sswang/image_matching/preprocessing/runs/detect/train6/weights/best.pt data=/datassd2/sswang/image_matching/data/isc_data/yolo_training/overlay_detect_data.yaml epochs=50 imgsz=512 workers=2 device=0,1,2,3 resume=True
 
 ### 预测

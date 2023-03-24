@@ -3,6 +3,7 @@ import random
 import string
 import numpy as np
 from PIL import ImageFilter, Image, ImageDraw
+from IPython.display import display
 import augly.image as imaugs
 from augly.image import utils as imutils
 import augly.image.transforms as transaugs
@@ -118,34 +119,6 @@ def check_dir(dir_path):
     """
     if not os.path.exists(dir_path):
         os.makedirs(dir_path)
-
-
-# def save_auged_file(out_path, folder_name, img_name, yolo_label, final_img):
-#     base_path = os.path.join(out_path, folder_name)
-#     output_img_path = os.path.join(base_path, 'images')
-#     output_label_path = os.path.join(base_path, 'labels')
-
-#     # 检查文件夹
-#     check_dir(output_img_path)
-#     check_dir(output_label_path)
-
-#     # 创建标签文件,存储标签信息
-#     label_name = 'Aug_New' + img_name.split('.')[0] + '.txt'
-#     yolo_label_path = os.path.join(output_label_path, label_name)
-#     with open(yolo_label_path, 'w') as f:
-#         str_ = str(yolo_label[0])
-#         for item in yolo_label[1:]:
-#             str_ = str_ + " " + str(item)
-#         f.write(str_)
-#         f.close()
-#     print("{} saved".format(label_name))
-
-#     # 存储增强之后的图片
-#     aug_image_name = 'Aug_New' + img_name
-#     final_img_path = os.path.join(output_img_path, aug_image_name)
-#     final_img.convert('RGB').save(final_img_path)
-#     print("{} saved".format(aug_image_name))
-
 
 
 # 将YOLO标签画出来
@@ -368,14 +341,19 @@ def concat_images(img_list, label_file, col, row, width, height):
     Returns:
         objs: 返回拼接后的图片和标签
     """
-
+    
     # 更改用拼接的图片大小
-    for index in img_list:
-        index.resize((width, height), Image.BICUBIC)
+
+    for index in range(len(img_list)) :
+        img_list[index] = img_list[index].resize((width, height), Image.BICUBIC)
+
+    # 修改图片尺寸
+    img_list = [index.resize((width, height), Image.BICUBIC) for index in img_list]
+
 
     #创建成品图的画布
     #第一个参数RGB表示创建RGB彩色图，第二个参数传入元组指定图片大小，第三个参数可指定颜色，默认为黑色
-    concat_image = Image.new('RGB', (width * col, height * row))
+    concat_image = Image.new('RGB', (width * col, height * row), (255, 228, 17))
     # 将图片以中心和边界值分解成网格
     grid_col = col * 2
     grid_row = row * 2
@@ -386,15 +364,14 @@ def concat_images(img_list, label_file, col, row, width, height):
             #对图片进行逐行拼接
             #paste方法第一个参数指定需要拼接的图片，第二个参数为二元元组（指定复制位置的左上角坐标）
             #或四元元组（指定复制位置的左上角和右下角坐标）
-            concat_image.paste(img_list[col * item_row + item_col], (width * col, height * row),  mask=None)
-            temp_label = (0, (col * 2 + 1) / grid_col , (row * 2 + 1) / grid_row, label_width, label_height)
+            concat_image.paste(img_list[col * item_row + item_col], (width * item_col, height * item_row))
+            temp_label = (0, (item_col * 2 + 1) / grid_col , (item_row * 2 + 1) / grid_row, label_width, label_height)
             str_ = str(temp_label[0])
             for item in temp_label[1:]:
                 str_ = str_ + " " + str(item)
             label_file.write(str_)
             label_file.write("\n")
-    return concat_image, label_file
-    # display(concat_image) #显示成品图
+    return concat_image
 
 
 

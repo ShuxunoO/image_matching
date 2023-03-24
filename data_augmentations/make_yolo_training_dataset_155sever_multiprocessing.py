@@ -20,8 +20,8 @@ bg_img_list = os.listdir(bg_img_path)
 face_img_path = '/datassd2/sswang/image_matching/data/isc_data/training_imgs/faces/'
 face_img_list = os.listdir(face_img_path)
 
-# output_base_path = '/datassd2/sswang/image_matching/data/isc_data/yolo_training/'
-output_base_path = '/datassd2/sswang/image_matching/data/test_output/'
+output_base_path = '/datassd2/sswang/image_matching/data/isc_data/yolo_training/'
+# output_base_path = '/datassd2/sswang/image_matching/data/test_output/'
 
 
 
@@ -136,7 +136,7 @@ def data_augmentation(overlay_list, aug_level=0, folder_name='train'):
         counter += 1
 
 
-def generate_grid_img(height = 512, width = 512, aug_level= 0,  folder_name='train', index=0):
+def generate_grid_img(index, height = 512, width = 512,  folder_name='train'):
     """
         生成网格图片
 
@@ -151,6 +151,10 @@ def generate_grid_img(height = 512, width = 512, aug_level= 0,  folder_name='tra
     # 生成网格的行数和列数
     col = random.randint(1, 4)
     row = random.randint(1, 4)
+    # 一行一列的情况就是对应单张图片，这时候默认让列数为2
+    if col * row == 1:
+        col = 2
+    # print("col: {}, row: {}".format(col, row))
 
     # 选出用于拼接的图片列表
     selected_images = [os.path.join(overlay_img_path, img_name) for img_name in random.sample(overlay_img_list, col * row)]
@@ -163,14 +167,14 @@ def generate_grid_img(height = 512, width = 512, aug_level= 0,  folder_name='tra
 
 
     # 生成网格图片 和 对应的标签
-    concat_image, label_file = concat_images(img_list = img_list, label_file = label_file, col = col, row = row, width=150, height=150)
+    concat_image = concat_images(img_list = img_list, label_file = label_file, col = col, row = row, width=150, height=150)
 
     # 构造数据增强对象
-    final_aug = final_aug_(aug_level=aug_level)
+    final_aug = final_aug_(aug_level = index % 6)
 
     # 对网格图进行数据增强
-    # final_img = final_aug(concat_image).resize((width, height), Image.BICUBIC)
-    final_img = final_aug(concat_image)
+    final_img = final_aug(concat_image).resize((width, height), Image.BICUBIC)
+    # final_img = final_aug(concat_image)
     # Image.ANTIALIAS
 
     # 存储增强之后的图片和标签
@@ -254,9 +258,12 @@ if __name__ == "__main__":
     #         pool.apply_async(data_augmentation, args=(sub_list, index, "valid",))
     # pool.close()
     # pool.join()
-    for i in range(5):
-        generate_grid_img(index = i)
 
+
+    pool = mp.Pool(processes = 20)
+    pool.map(generate_grid_img, range(6000))
+    pool.close()
+    pool.join()
 
     end_time = time.time()
     print("time cost: {}".format(end_time - start_time))
