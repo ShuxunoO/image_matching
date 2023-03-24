@@ -133,6 +133,54 @@ def data_augmentation(overlay_list, aug_level=0, folder_name='train'):
                         img_name=img, yolo_label=yolo_label, final_img=final_img)
         counter += 1
 
+
+
+
+def generate_grid_img(height = 512, width = 512, aug_level=0,  folder_name='train', index=0):
+    """
+        生成网格图片
+
+    Args:
+        height (int, optional): _description_. 最终生成的网格图的高度，Defaults to 512.
+        width (int, optional): _description_. 网格图的宽度 Defaults to 512.
+        aug_level (int, optional): _description_. 图像增强等级 Defaults to 0.
+        folder_name (str, optional): _description_.用于保存文件的文件夹 Defaults to 'train'.
+        index (int, optional): _description_. Defaults to 0.
+    """
+
+    # 生成网格的行数和列数
+    col = random.randint(1, 4)
+    row = random.randint(1, 4)
+
+    # 选出用于拼接的图片列表
+    selected_images = [os.path.join(overlay_img_path, img_name) for img_name in random.sample(overlay_img_list, col * row)]
+    img_list = [Image.open(img) for img in selected_images]
+
+    # 生成存放标签的文件
+    label_file = open(os.path.join(output_base_path, folder_name, "labels", 'Aug_New{}.txt'.format(index)), 'w')
+
+
+    # 生成网格图片 和 对应的标签
+    concat_image, label_file = concat_images(img_list = img_list, label_file = label_file, col = col, row = row, width=150, height=150)
+
+    # 构造数据增强对象
+    final_aug = final_aug_(aug_level=aug_level)
+
+    # 对网格图进行数据增强
+    final_img = final_aug(concat_image).resize((width, height),Image.ANTIALIAS)
+
+    # 存储增强之后的图片和标签
+    final_img.save(os.path.join(output_base_path, folder_name, "images",'Aug_New{}.jpg'.format(index)))
+
+
+
+
+
+
+
+
+
+
 # 进程测试函数
 def test(p):
        print(p)
@@ -212,7 +260,7 @@ if __name__ == "__main__":
 
 
 
-    concat_images(img_base_path, col, row, width, height):
+    
 
     end_time = time.time()
     print("time cost: {}".format(end_time - start_time))

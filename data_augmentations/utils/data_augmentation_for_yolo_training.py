@@ -366,39 +366,33 @@ def concat_images(img_list, label_file, col, row, width, height):
         height: 用于拼接的单张图片的高度
 
     Returns:
-        _type_: _description_
+        objs: 返回拼接后的图片和标签
     """
-    # img_base_path = "/datassd2/sswang/image_matching/data/isc_data/training_imgs/training"
-    selected_images = [os.path.join(img_base_path, img_name) for img_name in random.sample(img_file_list, col*row)]
 
-    # 创建一个标签文件
-    with open("/datassd2/sswang/image_matching/data_augmentations/utils/tests/grid_label.txt", 'w') as f:
-    #进行图片的复制拼接
-        image_files = []
-        #读取所有用于拼接的图片
-        for index in selected_images:
-            image_files.append(Image.open(index).resize((width, height),Image.ANTIALIAS))
-        #创建成品图的画布
-        #第一个参数RGB表示创建RGB彩色图，第二个参数传入元组指定图片大小，第三个参数可指定颜色，默认为黑色
-        concat_image = Image.new('RGB', (width * col, height * row))
-        # 将图片以中心和边界值分解成网格
-        grid_col = col * 2
-        grid_row = row * 2
-        width = 1 / col
-        height = 1 / row
-        for item_row in range(row):
-            for item_col in range(col):
-                #对图片进行逐行拼接
-                #paste方法第一个参数指定需要拼接的图片，第二个参数为二元元组（指定复制位置的左上角坐标）
-                #或四元元组（指定复制位置的左上角和右下角坐标）
-                concat_image.paste(image_files[col * item_row + item_col], (width * col, height * row))
-                temp_label = (0, (col * 2 + 1) / grid_col , (row * 2 + 1) / grid_row, width, height)
-                str_ = str(temp_label[0])
-                for item in temp_label[1:]:
-                    str_ = str_ + " " + str(item)
-                label_file.write(str_)
-                label_file.write("\n")
-    f.close()
+    # 更改用拼接的图片大小
+    for index in img_list:
+        index.resize((width, height),Image.ANTIALIAS)
+
+    #创建成品图的画布
+    #第一个参数RGB表示创建RGB彩色图，第二个参数传入元组指定图片大小，第三个参数可指定颜色，默认为黑色
+    concat_image = Image.new('RGB', (width * col, height * row))
+    # 将图片以中心和边界值分解成网格
+    grid_col = col * 2
+    grid_row = row * 2
+    width = 1 / col
+    height = 1 / row
+    for item_row in range(row):
+        for item_col in range(col):
+            #对图片进行逐行拼接
+            #paste方法第一个参数指定需要拼接的图片，第二个参数为二元元组（指定复制位置的左上角坐标）
+            #或四元元组（指定复制位置的左上角和右下角坐标）
+            concat_image.paste(img_list[col * item_row + item_col], (width * col, height * row))
+            temp_label = (0, (col * 2 + 1) / grid_col , (row * 2 + 1) / grid_row, width, height)
+            str_ = str(temp_label[0])
+            for item in temp_label[1:]:
+                str_ = str_ + " " + str(item)
+            label_file.write(str_)
+            label_file.write("\n")
     return concat_image, label_file
     # display(concat_image) #显示成品图
 
