@@ -7,3 +7,4 @@ preprocessing/*
 .git
 # /tests
 /ISC2021
+/runs

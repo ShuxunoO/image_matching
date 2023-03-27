@@ -20,7 +20,8 @@ bg_img_list = os.listdir(bg_img_path)
 face_img_path = '/datassd2/sswang/image_matching/data/isc_data/training_imgs/faces/'
 face_img_list = os.listdir(face_img_path)
 
-output_base_path = '/datassd2/sswang/image_matching/data/isc_data/yolo_training/'
+# output_base_path = '/datassd2/sswang/image_matching/data/isc_data/yolo_training/'
+output_base_path = '/datassd2/sswang/image_matching/data/isc_data/test_subset/gride_concate/'
 # output_base_path = '/datassd2/sswang/image_matching/data/test_output/'
 
 
@@ -136,7 +137,7 @@ def data_augmentation(overlay_list, aug_level=0, folder_name='train'):
         counter += 1
 
 
-def generate_grid_img(index, height = 512, width = 512,  folder_name='train'):
+def generate_grid_img(index, height = 512, width = 512,  folder_name='valid'):
     """
         生成网格图片
 
@@ -170,7 +171,7 @@ def generate_grid_img(index, height = 512, width = 512,  folder_name='train'):
     concat_image = concat_images(img_list = img_list, label_file = label_file, col = col, row = row, width=150, height=150)
 
     # 构造数据增强对象
-    final_aug = final_aug_(aug_level = index % 6)
+    final_aug = final_aug_(aug_level = 5)
 
     # 对网格图进行数据增强
     final_img = final_aug(concat_image).resize((width, height), Image.BICUBIC)
@@ -260,8 +261,8 @@ if __name__ == "__main__":
     # pool.join()
 
 
-    pool = mp.Pool(processes = 20)
-    pool.map(generate_grid_img, range(6000))
+    pool = mp.Pool(processes = 5)
+    pool.map(generate_grid_img, range(80))
     pool.close()
     pool.join()
 

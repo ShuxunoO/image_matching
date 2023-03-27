@@ -10,29 +10,20 @@ Win10 训练CLI命令
 
 155服务器
 ### 训练
-> yolo task=detect mode=train model=/datassd2/sswang/image_matching/data/isc_data/yolo_training/overlay_detect_data.yaml data=/datassd2/sswang/image_matching/data/isc_data/yolo_training/overlay_detect_data.yaml epochs=20 imgsz=512 workers=4 device=0,1,2,3 resume=True
+> yolo task=detect mode=train model=/datassd2/sswang/image_matching/preprocessing/runs/detect/train8/weights/best.pt data=/datassd2/sswang/image_matching/data/isc_data/yolo_training/overlay_detect_data.yaml epochs=20 imgsz=512 workers=8 device=0,1 batch=50 resume=True
+
 
 ### 断点回复训练
-> yolo task=detect mode=train model=/datassd2/sswang/image_matching/preprocessing/runs/detect/train6/weights/best.pt data=/datassd2/sswang/image_matching/data/isc_data/yolo_training/overlay_detect_data.yaml epochs=50 imgsz=512 workers=2 device=0,1,2,3 resume=True
+> yolo task=detect mode=train model=/datassd2/sswang/image_matching/preprocessing/runs/detect/train6/weights/best.pt data=/datassd2/sswang/image_matching/data/isc_data/yolo_training/overlay_detect_data.yaml epochs=20 imgsz=512 workers=8 device=0,1,5,6,7 batch=20 resume=True
 
 ### 预测
-> yolo predict model=/datassd2/sswang/image_matching/preprocessing/runs/detect/train7/weights/best.pt source=/datassd2/sswang/image_matching/data/news_BA device=1,2,3,4 save=True conf=0.3 
+> yolo predict model=/datassd2/sswang/image_matching/preprocessing/runs/detect/train8/weights/best.pt source=/datassd2/sswang/image_matching/data/news_BA device=0,1,2 save=True conf=0.5
 
-> yolo predict model=/datassd2/sswang/image_matching/preprocessing/runs/detect/train7/weights/best.pt source=/datassd2/sswang/image_matching/data/isc_data/query_img2_subset device=1,2,3,4 save=True conf=0.3 save_crop=True
+> yolo predict model=/datassd2/sswang/image_matching/preprocessing/runs/detect/train8/weights/best.pt source=/datassd2/sswang/image_matching/data/isc_data/query_img2_subset device=0,1,2,3,4 save=True conf=0.5
 
+### 测试
+边缘腐蚀
+> yolo detect val data=/datassd2/sswang/image_matching/data/isc_data/test_subset/edge_corrosion/overlay_detect_data.yaml model=/datassd2/sswang/image_matching/preprocessing/runs/detect/train8/weights/best.pt  device=0
 
-
-Traceback (most recent call last):
-  File "/datassd2/sswang/image_matching/data_augmentations/make_yolo_training_dataset_155sever.py", line 68, in <module>
-    bg_img = bg_aug(bg_img)
-  File "/home/sswang/anaconda3/envs/img_matching/lib/python3.9/site-packages/augly/image/composition.py", line 89, in __call__
-    image = transform(
-  File "/home/sswang/anaconda3/envs/img_matching/lib/python3.9/site-packages/augly/image/transforms.py", line 64, in __call__
-    return self.apply_transform(image, metadata, bboxes, bbox_format)
-  File "/home/sswang/anaconda3/envs/img_matching/lib/python3.9/site-packages/augly/image/transforms.py", line 1702, in apply_transform
-    return F.pixelization(
-  File "/home/sswang/anaconda3/envs/img_matching/lib/python3.9/site-packages/augly/image/functional.py", line 1900, in pixelization
-    aug_image = image.resize((int(width * ratio), int(height * ratio)))
-  File "/home/sswang/anaconda3/envs/img_matching/lib/python3.9/site-packages/PIL/Image.py", line 2192, in resize
-    return self._new(self.im.resize(size, resample, box))
-ValueError: height and width must be > 0
+九宫格
+> yolo detect val data=/datassd2/sswang/image_matching/data/isc_data/test_subset/gride_concate/overlay_detect_data.yaml model=/datassd2/sswang/image_matching/preprocessing/runs/detect/train8/weights/best.pt device=0
